@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<overlay id="sample" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<wizard id="calendar-wizard" onload="loadTestExt();">
+		<script type="application/x-javascript" src="chrome://sample/content/calendarCreation.js"/>
+		<wizardpage pageid="locationPageLocal" 
+	               next="customizePage"
+	               label="Einen neuen Kalender erstellen"
+				   onpageshow="checkRequiredLocal();"
+	               description="Ort Ihres Kalenders feststellen">
+	        <description>Bitte waehlen Sie den Typ Ihres Kalenders aus</description>
+			<radiogroup id="calendar-format-local" onselect="onChangeFormatSelection();">
+				<radio value="default" label="Sunbird-Kalender (Standard)" selected="true"/>
+				<radio value="thunderbird" label="Geburtstage aus Thunderbird-Adressbuch"/>
+			</radiogroup>
+			<label id="abook-lbl" value="Pfad zum Adressbuch (abook.mab):" hidden="true"/>
+			<textbox id="abook-uri-local" hidden="true" oninput="checkRequiredLocal();" />
+	   </wizardpage>
+   </wizard>
+
+	<radiogroup id="calendar-format">
+		<radio value="testext" hidden="true"/>
+	</radiogroup>
+</overlay>
