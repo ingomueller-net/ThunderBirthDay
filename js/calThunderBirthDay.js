@@ -76,6 +76,9 @@ function calThunderBirthDay() {
 }
 
 calThunderBirthDay.prototype = {
+/*
+ * Implement nsISupports
+ */
 	QueryInterface: function cTBD_QueryInterface(aIID) {
         if (!aIID.equals(Ci.nsISupports) &&
             !aIID.equals(Ci.calICalendar)) {
@@ -109,10 +112,12 @@ calThunderBirthDay.prototype = {
     },
 	
     get readOnly() {
+		// For the moment, ThunderBirthDay is readonly
         return true;
     },
 	
     set readOnly(v) {
+		// For the moment, ThunderBirthDay is readonly, so don't accept changes to readOnly
 		return true;
     },
 	
@@ -142,11 +147,15 @@ calThunderBirthDay.prototype = {
 	
     get canRefresh() {
 		// I *guess* it makes sense to refresh this calender, as its entries are
-		// only modified by an external application (=the thunderbird adressbook)
-		// until now.
+		// only modified by an external application (=the thunderbird adressbook),
+		// at least until now.
         return true;
     },
 	
+	/*
+	 * The following two functions for observer handling have been copied without changes
+	 * from the google calender provider. For the moment, they just work fine.
+	 */
     addObserver: function cTBD_addObserver(aObserver) {
        if (this.mObservers.indexOf(aObserver) == -1) {
             this.mObservers.push(aObserver);
@@ -161,98 +170,129 @@ calThunderBirthDay.prototype = {
     },
 	
 	/*
-	 * The following functions only consist of throwing CAL_IS_READONLY exceptions
-	 * as thunderbirthday can't write to the adressbook yet.
+	 * The following four functions only consist of throwing CAL_IS_READONLY exceptions
+	 * as thunderbirthday can't write to the adressbook yet. This is not optimal yet, as throwing
+	 * an exception causes an ugly error message on the front end + strange behaviour (events that
+	 * one tried to modify just disappear temporarily). Maybe returning the original item is a better
+	 * idea?
 	 */
     adoptItem: function cTBD_adoptItem(aItem, aListener) {
-		LOG(2,"TBD: adoptItem() called");
-        
-		try {
-			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
-        } catch (e) {
-            this.notifyObservers("onError", [e.result, e.message]);
-            
-            if (aListener != null) {
-                aListener.onOperationComplete(this,
-                                              e.result,
-                                              Ci.calIOperationListener.ADD,
-                                              null,
-                                              e.message);
-            }
-        }
-    },
+		/* // Return null, as we don't want any new events to be created
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  Cr.NS_OK,
+										  Ci.calIOperationListener.ADD,
+										  null,
+										  null);
+		}
+		
+		this.notifyObservers("onAddItem", null);		// I didn't find something like "onAdoptItem", so I guess this is the right event.
+		
+		// The following code was used by the google calender provider when a calender was readonly.
+		// I think that this solution is not optimal, as it causes an ugly error message. */
+		
+		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
+		
+		this.notifyObservers("onError", [e.result, e.message]);
+		
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  e.result,
+										  Ci.calIOperationListener.ADD,
+										  null,
+										  e.message);
+		} 
+	},
 	
     addItem: function cTBD_addItem(aItem, aListener) {
 		LOG(2,"TBD: addItem() called");
+		
+		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
         
-		try {
-			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
-        } catch (e) {
-            this.notifyObservers("onError", [e.result, e.message]);
-            
-            if (aListener != null) {
-                aListener.onOperationComplete(this,
-                                              e.result,
-                                              Ci.calIOperationListener.ADD,
-                                              null,
-                                              e.message);
-            }
-        }
+		this.notifyObservers("onError", [e.result, e.message]);
+		
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  e.result,
+										  Ci.calIOperationListener.ADD,
+										  null,
+										  e.message);
+		}
     },
 	
     modifyItem: function cTBD_modifyItem(aNewItem, aOldItem, aListener) {
-		LOG(2,"TBD: modifyItem() called");
+		LOG(2,"TBD: modifyItem() called: " + aNewItem.icalString + "," + aOldItem.icalString);
         
-		try {
-			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
-        } catch (e) {
-            this.notifyObservers("onError", [e.result, e.message]);
-            
-            if (aListener != null) {
-                aListener.onOperationComplete(this,
-                                              e.result,
-                                              Ci.calIOperationListener.MODIFY,
-                                              null,
-                                              e.message);
-            }
-        }
-    },
+		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
+        
+		this.notifyObservers("onError", [e.result, e.message]);
+		
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  e.result,
+										  Ci.calIOperationListener.MODIFY,
+										  null,
+										  e.message);
+		}
+	},
 	
     deleteItem: function cTBD_deleteItem(aItem, aListener) {
-		LOG(2,"TBD: deleteItem() called");
+		LOG(2,"TBD: deleteItem() called: " + aItem.id);
         
-		try {
-			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
-        } catch (e) {
-            this.notifyObservers("onError", [e.result, e.message]);
-            
-            if (aListener != null) {
-                aListener.onOperationComplete(this,
-                                              e.result,
-                                              Ci.calIOperationListener.DELETE,
-                                              null,
-                                              e.message);
-            }
-        }
+		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
+        
+		this.notifyObservers("onError", [e.result, e.message]);
+		
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  e.result,
+										  Ci.calIOperationListener.DELETE,
+										  null,
+										  e.message);
+		}
     },
 	
-	//todo: implement
+	//Todo: untested! How can I test this function?
+	/** 
+	    * cTBD_getItem
+	    * Iterates throu this.mBaseItems and returns the first item with matching id.
+	    */
     getItem: function cTBD_getItem(aId, aListener) {
 		LOG(2,"TBD: getItem() called");
+		
+		// Iterate throu this.mBaseItems and return item with matching id
+		for (var i = 0; i < this.mBaseItems.length; i++) {
+			if (this.mBaseItems[i].id == aId && aListener != null) {
+				// Return item
+				aListener.onGetResult(this,
+									  Cr.NS_OK,
+									  Ci.calIEvent,
+									  null,
+									  1,
+									  [this.mBaseItems[i]]);
+				
+				// Operation completed successfully.
+				if (aListener != null) {
+					aListener.onOperationComplete(this,
+												  Cr.NS_OK,
+												  Ci.calIOperationListener.GET,
+												  this.mBaseItems[i].id,
+												  [this.mBaseItems[i]]);
+				}
+				
+				// we don't expect another item with this id...
+				return;
+			}
+		}
         
-		try {
-			throw new Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
-        } catch (e) {
-            this.notifyObservers("onError", [e.result, e.message]);
-            
-            if (aListener != null) {
-                aListener.onOperationComplete(this,
-                                              e.result,
-                                              Ci.calIOperationListener.DELETE,
-                                              null,
-                                              e.message);
-            }
-        }
+		// Nothing was found, so report it
+		if (aListener != null) {
+			aListener.onOperationComplete(this,
+										  Cr.NS_OK,
+										  Ci.calIOperationListener.GET,
+										  null,
+										  null);
+		}
     },
 	
     getItems: function cTBD_getItems(aItemFilter,
@@ -294,6 +334,34 @@ calThunderBirthDay.prototype = {
 			this.calculateRangeIndices(aRangeStart, aRangeEnd, rangeIndices);
 			
 			
+			// debug calculateRangeIndices():
+			/* var log = "TBD: pivot: Indices " + rangeIndices.startIndex + " to " + rangeIndices.endIndex + ", range " + aRangeStart.month + "." + aRangeStart.day + ". to " + aRangeEnd.month + "." + aRangeEnd.day + ".\n";
+			
+			var empty = rangeIndices.startIndex > rangeIndices.endIndex;
+			var done = false;
+			
+			log += (empty ? "---- empty -----\n" : "");
+			
+			for (var i = 0; i < this.mBaseItems.length; i++) {
+				if (i == rangeIndices.startIndex && !empty) log += "(" + i + ") " + "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n";
+				
+				if (empty && !done && cTBD_compareDatesInYear(this.mBaseItems[i].startDate, aRangeStart) > 0) {
+					done = true;
+					log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+				}
+				
+				log += "(" + i + ") " + this.mBaseItems[i].startDate.month + "." + this.mBaseItems[i].startDate.day + ".\n";
+				if (i == (rangeIndices.endIndex % this.mBaseItems.length) && !empty) log += "(" + i + ") " + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+			}
+			
+			if (!done && empty) {
+				done = true;
+				log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+			}
+			
+			LOG(1,log); */
+			
+			
 			// iterate through cards in this.mBaseItems
 			for (var i, ii = rangeIndices.startIndex; ii <= rangeIndices.endIndex
 							&& (aCount == 0 || itemsSent < aCount); ii++) {
@@ -305,7 +373,7 @@ calThunderBirthDay.prototype = {
 				
 				// collect occurrences or base item depending on the filter
 				if (itemReturnOccurrences) {
-					var items = cTBD_getOccurencesAsEvents(this.mBaseItems[i], aRangeStart, aRangeEnd);
+					var items = cTBD_getOccurencesFromEvent(this.mBaseItems[i], aRangeStart, aRangeEnd);
 				} else {
 					var items = [this.mBaseItems[i]];
 				}
@@ -374,7 +442,7 @@ calThunderBirthDay.prototype = {
 	},
 	
 	/*
-	 * Batch mode is not implemented. I don't know, whether we even need this...
+	 * Batch mode is not implemented. I don't know, whether we even need this at all...
 	 */
     startBatch: function cTBD_startBatch() {
 		LOG(1,"TBD: startBatch() called");
@@ -526,6 +594,9 @@ calThunderBirthDay.prototype = {
 	    * is earlier in the year than aRangeStart. In this case, aResult.endIndex % this.mBaseItems.length
 	    * is the index of the first element after the range.
 	    *
+	    * If there is no item in the range, aResult.endIndex will be smaller than aResult.startIndex
+	    * and may be negative.
+	    *
 	    * @param aRangeStart  calIDateTime for the start of the range
 	    * @param aRangeEnd  calIDateTime for the end of the range
 	    *
@@ -536,87 +607,103 @@ calThunderBirthDay.prototype = {
 		
 		// check whether it makes sense to calculate the indices
 		// it doesn't make sens if the range is not set or (roughly) longer than a year
-		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year >= 2 ||
-					(aRangeEnd.year - aRangeStart.year == 1 && aRangeEnd.month <= aRangeStart.month) ||
-					this.mBaseItems.length == 0) {
+		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year > 1 ||
+					(aRangeEnd.year - aRangeStart.year == 1 && aRangeEnd.month >= aRangeStart.month) ) {
 			
-			LOG(1,"TBD: range is more than a year.");
+			LOG(1,"TBD: pivot: range is more than a year.");
 			
 			// if it doesn't make sense, just "mark" the whole base items array
 			aResult.startIndex = 0;
 			aResult.endIndex = this.mBaseItems.length - 1;
+		}
+		
+		// No need to calculate anything either if there are no items
+		else if (this.mBaseItems.length == 0) {
+			LOG(1,"TBD: pivot: No items in calender.");
 			
-		} else {		// range is less than a year
+			// No element in range, so let startIndex be greater than endIndex
+			aResult.startIndex = -1;
+			aResult.endIndex = -2;
+		}
+		
+		// range is less than a year
+		else {
 			
-			// binary search the first element in the range
+			// Binary search the first element after aRangeStart.
 			var lower = 0;
 			var upper = this.mBaseItems.length;
+			var pivotIndex;
 			
 			while (upper != lower) {
-				aResult.startIndex = Math.floor((upper + lower)/2);
+				pivotIndex = Math.floor((upper + lower)/2);
 				
-				LOG(0,"TBD: pivot: (" + aResult.startIndex + ") " + this.mBaseItems[aResult.startIndex].startDate);
+				LOG(0,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
 				
 				if (cTBD_compareDatesInYear(aRangeStart,
-											this.mBaseItems[aResult.startIndex].startDate) <= 0) {	// too late
-					upper = aResult.startIndex;
+											this.mBaseItems[pivotIndex].startDate) <= 0) {	// too late
+					upper = pivotIndex;
 				} else {	// too early
-					lower = aResult.startIndex + 1;
+					lower = pivotIndex + 1;
 				}
 			}
 			
-			if (lower == this.mBaseItems.length) {
-				// no element found, so just take last one
-				aResult.startIndex = this.mBaseItems.length - 1;
-			} else {
-				aResult.startIndex = lower;		// == upper
-			}
-			
-			LOG(1,"TBD: first element in range starts " + this.mBaseItems[aResult.startIndex].startDate);
+			// This is the index of the first element after aRangeStart (may be this.mBaseItems.length).
+			aResult.startIndex = lower;
 			
 			
-			// binary search the first element after in the range
-			lower = 0;
-			upper = this.mBaseItems.length;
+			// Binary search the first element before aRangeEnd.
+			lower = -1;
+			upper = this.mBaseItems.length - 1;
 			
 			while (upper != lower) {
-				aResult.endIndex = Math.floor((upper + lower)/2);
+				pivotIndex = Math.ceil((upper + lower)/2);
 				
-				LOG(0,"TBD: pivot: (" + aResult.endIndex + ") " + this.mBaseItems[aResult.endIndex].startDate);
+				LOG(0,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
 				
 				if (cTBD_compareDatesInYear(aRangeEnd,
-											this.mBaseItems[aResult.endIndex].startDate) < 0) {		// too late
-					upper = aResult.endIndex;
+											this.mBaseItems[pivotIndex].startDate) < 0) {		// too late
+					upper = pivotIndex - 1;
 				} else {	// too early
-					lower = aResult.endIndex + 1;
+					lower = pivotIndex;
 				}
 			}
 			
-			if (lower == this.mBaseItems.length) {
-				// no element found, so just take last one
-				aResult.endIndex = this.mBaseItems.length - 1;
-			} else {
-				aResult.endIndex = lower;		// == upper
-			}
+			// This is the index of the first element before aRangeEnd (may be -1).
+			aResult.endIndex = lower;
 			
-			LOG(1,"TBD: last element in range starts " + this.mBaseItems[aResult.endIndex].startDate);
+			
+			// Take care of special cases
+			if ((aResult.startIndex == this.mBaseItems.length && aResult.endIndex == -1) ||
+						(aResult.endIndex < aResult.startIndex &&
+						 cTBD_compareDatesInYear(aRangeEnd, aRangeStart) > 0 ) ) {
+				LOG(1,"TBD: pivot: empty range (" + (aResult.startIndex == this.mBaseItems.length && aResult.endIndex == -1) + "," + (aResult.endIndex < aResult.startIndex) + "," + (cTBD_compareDatesInYear(aRangeEnd, aRangeStart) > 0 ) + "," + aResult.startIndex + "," + aResult.endIndex + ")");
+				
+				// No element in range, so let startIndex be greater than endIndex
+				aResult.startIndex = -1;
+				aResult.endIndex = -2;
+			} else if (aResult.startIndex == this.mBaseItems.length) {
+				// No element after the aRangeStart, so start at the next element is the first in the next year
+				aResult.startIndex = 0;
+				
+				LOG(1,"TBD: pivot: no element after range start");
+			} else if (aResult.endIndex == -1) {
+				// No Element before aRangeEnd, so end at the last element of the year before
+				aResult.endIndex = this.mBaseItems.length - 1;
+				
+				LOG(1,"TBD: pivot: no element before range end");
+			} else if (aResult.endIndex < aResult.startIndex) {
+				// Range has items in two years (and is therefore around new silvester/year), so there is a "carry-over"
+				aResult.endIndex += this.mBaseItems.length;
+				
+				LOG(1,"TBD: pivot: range has carry over.");
+			} else {
+				// Regular range, nothing to do
+				LOG(1,"TBD: pivot: regular range");
+			}
 		}
 		
 		var endTime = new Date();
 		LOG(1,"TBD: calculateRangeIndices run in " + (endTime - startTime) + "ms.");
-		
-		// debug:
-		// var log = "TBD: pivot: result found in " + (endTime - startTime) + " ms: \n";
-		// for (var i = 0; i < this.mBaseItems.length; i++) {
-			// if (i == aResult.startIndex) log += "_" + aRangeStart.month + "." + aRangeStart.day + "._\n";
-			// if (i == aResult.endIndex) log += "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^\n";
-			// log += this.mBaseItems[i].startDate.month + "." + this.mBaseItems[i].startDate.day + ".\n";
-		// }
-		// LOG(0,log);
-		
-		
-		// take care of "carry-over"
-		if (aResult.endIndex < aResult.startIndex) aResult.endIndex += this.mBaseItems.length;
 	}
 };
 
@@ -711,7 +798,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	// this is also false when year, month or day is not set or NaN
 	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
-		LOG(0,"TBD: convert: datum " + year + "-" + month + "-" + day + " nicht valide");
+		LOG(0,"TBD: convert: date " + year + "-" + month + "-" + day + " not valid");
 		return null;
 	}
 	
@@ -724,11 +811,12 @@ function cTBD_convertAbCardToEvent(abCard) {
 	event.startDate.isDate = true;
 	event.startDate.normalize();
 	
-	LOG(0,"TBD: convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
-				+ "-" + abCard.birthDay + " wird zu " + event.startDate.toString());
+	LOG(0,"TBD: convert: date " + abCard.birthYear + "-" + abCard.birthMonth 
+				+ "-" + abCard.birthDay + " has been converted to " + event.startDate.toString());
 	
 	event.endDate = event.startDate.clone();
 	event.endDate.day += 1;							// all-day events end 1 day after they began
+	
 	
 	
 	// set recurrence information
@@ -744,8 +832,6 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	// as the actual birthday, this event is the start of the recurrence
 	event.recurrenceStartDate = event.startDate.clone();
-	// todo: not sure what recurrenceId does...
-	event.recurrenceId = event.startDate.clone();
 	
 	
 	// additional info
@@ -763,8 +849,10 @@ function cTBD_convertAbCardToEvent(abCard) {
 
 
 /**
-    * cTBD_getOccurences
-    * Returns all occurences of an event in a certain range as items
+    * cTBD_getOccurencesFromEvent
+    * Returns all occurences of an event in a certain range as items. In fact, this is an extended
+    * calIRecurrenceInfo.getOccurrences() as it appends the age of the contact to its title, plus
+    * the range is a bit widened to show birthdays that already started, too.
     *
     * @param aEvent  calIEvent to get the occurrences from
     * @param aRangeStart  calIDateTime indicating the start of the range for the occurrences,
@@ -773,7 +861,7 @@ function cTBD_convertAbCardToEvent(abCard) {
     *
     * @returns calIEvent() which are occurrences of aEvent in the given range
     */
-function cTBD_getOccurencesAsEvents(aEvent, aRangeStart, aRangeEnd) {
+function cTBD_getOccurencesFromEvent(aEvent, aRangeStart, aRangeEnd) {
 	// we probably also want birthdays "that already started"
 	// that day, so we let the range start on the beginning of that day
 	var allDayRangeStart = aRangeStart.clone();
@@ -781,46 +869,24 @@ function cTBD_getOccurencesAsEvents(aEvent, aRangeStart, aRangeEnd) {
 	
 	
 	// get occurences
-	var recurrenceItems = aEvent.recurrenceInfo.getRecurrenceItems({});
-	var occurrences = recurrenceItems[0].getOccurrences(aEvent.startDate,
-														allDayRangeStart,
-														aRangeEnd,-1,{});	// I *suppose* that -1 means no limit
-	
-	// create events
-	var events = [];
+	var occurrences = aEvent.recurrenceInfo.getOccurrences(aRangeStart, aRangeEnd, 0, {});
 	
 	for (var i = 0; i < occurrences.length; i++) {
-		// todo: use createProxy()
-		var newItem = aEvent.clone();
+		occurrences[i] = occurrences[i].clone();
 		
-		with (newItem) {
-			startDate = occurrences[i].clone();
-			startDate.makeImmutable();
-			
-			endDate = occurrences[i].clone();
-			endDate.day += 1;
-			endDate.normalize();
-			endDate.makeImmutable();
-			
+		with (occurrences[i]) {
 			// append age to the title
 			var age = startDate.year - aEvent.startDate.year;
 			title += " (" + age + ")";
 			
-			// id is md5 hash of base item + age
-			id = aEvent.id + "-" + age;
-			
-			recurrenceInfo = aEvent.recurrenceInfo;
-			parentItem = aEvent;
 			makeImmutable();
-			
-			events.push(newItem);
 		}
 		
-		LOG(0,"TBD: created occurence with id " + newItem.id +
+		LOG(0,"TBD: created occurence with id " + occurrences[i].id +
 					" belonging to base event with id " + aEvent.id);
 	}
 	
-	return events;
+	return occurrences;
 }
 
 
@@ -844,6 +910,10 @@ function cTBD_compareDatesInYear(aDateTime1, aDateTime2) {
 	else return 0;
 }
 
+
+/*
+* General helpers
+*/
 
 /**
     * LOG
