@@ -14,7 +14,7 @@
  * The Original Code is Thunderbirthday Provider code.
  *
  * The Initial Developer of the Original Code is
- *	Ingo Mueller (thunderbirthday at ingomueller dot net)
+ *  Ingo Mueller (thunderbirthday at ingomueller dot net)
  * Portions created by the Initial Developer are Copyright (C) 2007
  * the Initial Developer. All Rights Reserved.
  *
