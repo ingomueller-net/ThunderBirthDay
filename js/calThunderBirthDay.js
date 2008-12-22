@@ -289,8 +289,20 @@ calThunderBirthDay.prototype = {
 						Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
 			
             
-			// iterate through cards
-			for (var i = 0; i < this.mBaseItems.length && (aCount == 0 || itemsSent < aCount); i++) {
+			// determine index in this.mBaseItems of first and last element to return
+			var rangeIndices = {};
+			this.calculateRangeIndices(aRangeStart, aRangeEnd, rangeIndices);
+			
+			
+			// iterate through cards in this.mBaseItems
+			for (var i, ii = rangeIndices.startIndex; ii < rangeIndices.endIndex
+							&& (aCount == 0 || itemsSent < aCount); ii++) {
+				
+				// if there is a "carry-over", ii may be greater than this.mBaseItems.length,
+				// which means that we continue at the beginning of the array
+				i = ii % this.mBaseItems.length;
+				
+				
 				// collect occurrences or base item depending on the filter
 				if (itemReturnOccurrences) {
 					var items = cTBD_getOccurencesAsEvents(this.mBaseItems[i], aRangeStart, aRangeEnd);
@@ -357,6 +369,7 @@ calThunderBirthDay.prototype = {
 		this.loadDirectories();
 		this.loadBaseItems();
 		
+		// tell observers to reload everything
 		this.notifyObservers("onLoad", [this]);
 	},
 	
@@ -438,6 +451,8 @@ calThunderBirthDay.prototype = {
 	    * loadBaseItems
 	    * Iterates through the directories asscociated with this calendar and stores
 	    * base items for all contacts with valid birth date as calIEvent's in this.mBaseItems.
+	    * Storing these events in RAM prevents us from reloading the directories every time
+	    * this.getItems() is called.
 	    */
 	loadBaseItems: function cTBD_loadBaseItems () {
 		var startTime = new Date();
@@ -477,12 +492,103 @@ calThunderBirthDay.prototype = {
 			// these are exceptions thrown by the nsIEnumerator interface and well known.
 			// apperently the interface can't be used in a clean way... :-/
 			catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
-				LOG(0,"TBD: getItems: exception: nsIEnumerator stinks!!!");
+				LOG(0,"TBD: loadBaseItems: exception: nsIEnumerator stinks!!!");
 			}
 		}
 		
 		var endTime = new Date();
 		LOG(2,"TBD: loadBaseItems: loaded " + itemsLoaded + " events in " + (endTime - startTime) + " ms.");
+		
+		
+		startTime = new Date();
+		this.mBaseItems.sort(function f(a,b) { return a.startDate.yearday - b.startDate.yearday; });
+		endTime = new Date();
+		
+		LOG(2,"TBD: loadBaseItems: sorted in " + (endTime - startTime) + " ms.");
+	},
+	
+	/**
+	    * calculateRangeIndices
+	    * Calculates the index in this.mBaseItems of the first element in the range (startIndex)
+	    * and the index of the first element after the range (endIndex). That way, elements with index
+	    * between these values are in the range. Note that this.mBaseItems is sorted by yearday.
+	    *
+	    * Note that aResult.endIndex may be greater than this.mBaseElements.length, if aRangeEnd
+	    * is earlier in the year than aRangeStart. In this case, aResult.endIndex % this.mBaseItems.length
+	    * is the index of the first element after the range.
+	    *
+	    * @param aRangeStart  calIDateTime for the start of the range
+	    * @param aRangeEnd  calIDateTime for the end of the range
+	    *
+	    * @returns  Object aResult with attributes startIndex and endIndex
+	    */
+	calculateRangeIndices: function cTBD_calculateRangeIndices (aRangeStart, aRangeEnd, aResult) {
+		var startTime = new Date();
+		
+		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year >= 2) { /* todo: || mehr als ein jahr */
+			aResult.startIndex = 0;
+			aResult.endIndex = this.mBaseItems.length;
+		} else {		// range is less than a year
+			aResult.startIndex;		// index of the first element in the range
+			aResult.endIndex;		// index of the first element after the range
+			
+			// binary search the first element in the range
+			var lower = 0;
+			var upper = this.mBaseItems.length;
+			
+			while (upper != lower) {
+				aResult.startIndex = Math.floor((upper + lower)/2);
+				
+				LOG(0,"TBD: pivot: (" + aResult.startIndex + ") " + this.mBaseItems[aResult.startIndex].startDate);
+				
+				// todo: don't use yearday, which might be wrong in leap years
+				if ((aRangeStart.yearday - this.mBaseItems[aResult.startIndex].startDate.yearday) <= 0) {	// too late
+					upper = aResult.startIndex;
+				} else {	// too early
+					lower = aResult.startIndex + 1;
+				}
+			}
+			
+			aResult.startIndex = lower;		// == upper
+			
+			LOG(1,"TBD: first element in range starts " + this.mBaseItems[aResult.startIndex].startDate);
+			
+			
+			// binary search the first element after in the range
+			lower = 0;
+			upper = this.mBaseItems.length;
+			
+			while (upper != lower) {
+				aResult.endIndex = Math.floor((upper + lower)/2);
+				
+				LOG(0,"TBD: pivot: (" + aResult.endIndex + ") " + this.mBaseItems[aResult.endIndex].startDate);
+				
+				if ((aRangeEnd.yearday - this.mBaseItems[aResult.endIndex].startDate.yearday) < 0) {	// too late
+					upper = aResult.endIndex;
+				} else {	// too early
+					lower = aResult.endIndex + 1;
+				}
+			}
+			
+			aResult.endIndex = lower;		// == upper
+			
+			LOG(1,"TBD: last element in range starts " + this.mBaseItems[aResult.endIndex].startDate);
+		}
+		
+		var endTime = new Date();
+		
+		
+		// var log = "TBD: pivot: result found in " + (endTime - startTime) + " ms: ";
+		// for (var i = 0; i < this.mBaseItems.length; i++) {
+			// if (i == aResult.startIndex) log += "_" + aRangeStart.yearday + "_<";
+			// if (i == aResult.endIndex) log += "^" + aRangeEnd.yearday + "^<";
+			// log += this.mBaseItems[i].startDate.yearday + "<";
+		// }
+		// LOG(1,log);
+		
+		
+		// take care of "carry-over"
+		if (aResult.endIndex < aResult.startIndex) aResult.endIndex += this.mBaseItems.length;
 	}
 };
 
@@ -684,16 +790,22 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 
 /**
     * LOG
-    * Logs the message aMessage to the error console if aDebugLevel is higher than a certain
+    * Logs the message aMessage to the console if aDebugLevel is higher than a certain
     * number, that can be set according to ones suites. As a convention, debug levels can be
-    * integers from 0 (tottaly unimportant) to 5 (very important).
-    *
+    * integers from 0 (totaly unimportant) to 5 (very important). Only messages with debug
+    * level 5 are shown as errors, other messages as notices.
     *
     * @param aDebugLevel  Minimum debug level where the message should be shown.
     * @param aMessage  Message to be logged.
     */
 function LOG(aDebugLevel, aMessage) {
-	if (aDebugLevel >= 1) {
-		Components.utils.reportError(aMessage);
+	if (aDebugLevel >= 5) {
+		if (aDebugLevel < 5) {
+			var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+										 .getService(Components.interfaces.nsIConsoleService);
+			consoleService.logStringMessage(aMessage);
+		} else {
+			Components.utils.reportError(aMessage);
+		}
 	}
 }
