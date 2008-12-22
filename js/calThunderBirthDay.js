@@ -38,15 +38,17 @@
 
 /**
  * calThunderBirthDay
- * This implements the calICalendar interface adapted to the Thunderbirthday
+ * This implements the calICalendar interface adapted to the ThunderBirthDay
  * Provider.
  */
 function calThunderBirthDay() {
-    this.mObservers  = new Array();
-    this.mProperties = new Array();
+    this.initProviderBase();
 }
 
 calThunderBirthDay.prototype = {
+    // Inherit from calProviderBase for the the nice helpers
+    __proto__: calProviderBase.prototype,
+    
 /*
  * Implement nsISupports
  */
@@ -61,119 +63,10 @@ calThunderBirthDay.prototype = {
 /*
  * Member Variables
  */
-    mID: null,
-    mObservers: null,
     mUri: null,
-    mProperties: null,
     mDirectories: null,
     mBaseItems: null,
     
-/*
- * Implement calICalendar
- * (Lightning 0.8+ only)
- *
- * The following code is copied from calProviderBase and
- * slightly modified. See http://lxr.mozilla.org/mozilla1.8/
- * source/calendar/providers/base/calProviderBase.js
- */
-    get superCalendar() {
-        // If we have a superCalendar, check this calendar for a superCalendar.
-        // This will make sure the topmost calendar is returned
-        return (this.mSuperCalendar ? this.mSuperCalendar.superCalendar : this);
-    },
-    
-    set superCalendar(val) {
-        return (this.mSuperCalendar = val);
-    },
-
-    getProperty: function cTBD_getProperty(aName) {
-        MyLOG(4, "TBD: getProperty: " + aName);
-        
-        // Constant values
-        switch (aName) {
-            case "readOnly":
-            case "suppressAlarms":
-                return true;
-            case "capabilities.attachments.supported":
-            case "capabilities.priority.supported":
-            case "capabilities.privacy.supported":
-            case "capabilities.tasks.supported":
-            case "requiresNetwork":
-                return false;
-        }
-        
-        // Regular preferences
-        var ret = this.mProperties[aName];
-        if (ret === undefined) {
-            ret = null;
-            if (this.id) {
-                // xxx future: return getPrefSafe("calendars." + this.id +
-                //                                "." + aName, null);
-                ret = getCalendarManager().getCalendarPref_(this, aName);
-                if (ret !== null) {
-                    switch (aName) {
-                        case "relaxedMode":
-                        case "cache.supported":
-                        case "cache.enabled":
-                        case "calendar-main-in-composite":
-                        case "calendar-main-default":
-                            ret = (ret == "true");
-                            break;
-                        case "backup-time":
-                        case "cache.updateTimer":
-                            ret = Number(ret);
-                            break;
-                        }
-                }
-            }
-            this.mProperties[aName] = ret;
-        }
-        return ret;
-    },
-    
-    setProperty: function cTBD_setProperty(aName, aValue) {
-        MyLOG(4, "TBD: setProperty: " + aName);
-        
-        // Constant values
-        switch (aName) {
-            case "readOnly":
-            case "suppressAlarms":
-                return true;
-        }
-        
-        // Regular preferences
-        var oldValue = this.getProperty(aName);
-        if (oldValue != aValue) {
-            this.mProperties[aName] = aValue;
-            if (this.id) {
-                var v = aValue;
-                switch (aName) {
-                    case "relaxedMode":
-                    case "cache.supported":
-                    case "cache.enabled":
-                    case "calendar-main-in-composite":
-                    case "calendar-main-default":
-                        v = (v ? "true" : "false");
-                        break;
-                }
-                // xxx future: setPrefSafe("calendars." + this.id + "." + aName, aValue);
-                getCalendarManager().setCalendarPref_(this, aName, v);
-            }
-            
-            this.notifyObservers("onPropertyChanged",
-                                 [this.superCalendar, aName, aValue, oldValue]);
-        }
-        return aValue;
-    },
-
-    deleteProperty: function cTBD_deleteProperty(aName) {
-        MyLOG(4, "TBD: deleteProperty: " + aName);
-        
-        this.notifyObservers("onPropertyDeleting", [this.superCalendar, aName]);
-        delete this.mProperties[aName];
-        getCalendarManager().deleteCalendarPref_(this, aName);
-    },
-
 /*
  * Implement calICalendar
  * (Lightning 0.5-0.7 only)
@@ -191,37 +84,64 @@ calThunderBirthDay.prototype = {
     
 /*
  * Implement calICalendar
- * (both Lightning 0.5-0.7 and 0.8+)
+ * (Lightning 0.5-0.8 only)
  */
-    get id() {
-        return this.mID;
+    get sendItipInvitations() {
+        // We don't "handle invitations internally"...
+        return true;
     },
     
-    set id(id) {
-        if (this.mID) {
-            throw Components.results.NS_ERROR_ALREADY_INITIALIZED;
+/*
+ * Implement calICalendar
+ * (Lightning 0.8+ only)
+ *
+ * The following code is heavily inspired by the google calendaer provider.
+ * See http://mxr.mozilla.org/mozilla1.8/source/calendar/providers/gdata/
+ */
+    getProperty: function cGC_getProperty(aName) {
+        MyLOG(2, "TBD: getProperty: " + aName);
+        
+        switch (aName) {
+            // Limitations due to being read-only
+            case "readOnly":
+            case "suppressAlarms":
+                return true;
+            // Capabilities
+            case "requiresNetwork":
+            case "capabilities.attachments.supported":
+            case "capabilities.priority.supported":
+            case "capabilities.tasks.supported":
+            case "capabilities.alarms.popup.supported":
+            case "capabilities.alarms.oninviations.supported":
+            case "capabilities.timezones.UTC.supported":
+                return false;
+            // imip/itip
+            case "imip.identity.disabled":
+                return true;
+            case "capabilities.privacy.values":
+                return ["DEFAULT", "PUBLIC", "PRIVATE"];
         }
-        return (this.mID = id);
+
+        return this.__proto__.__proto__.getProperty.apply(this, arguments);
     },
     
-    get name() {
-        var calMgr = getCalendarManager();
-        if (calMgr.getCalendarPref) {
-            return calMgr.getCalendarPref(this, "name");
-        } else {
-            return calMgr.getCalendarPref_(this, "name");
+    setProperty: function cTBD_setProperty(aName, aValue) {
+        MyLOG(4, "TBD: setProperty: " + aName);
+        
+        // Limitations due to being read-only
+        switch (aName) {
+            case "readOnly":
+            case "suppressAlarms":
+                return true;
         }
+        
+        return this.__proto__.__proto__.setProperty.apply(this, arguments);
     },
-    
-    set name(aName) {
-        var calMgr = getCalendarManager();
-        if (calMgr.setCalendarPref) {
-            return calMgr.setCalendarPref(this, "name", aName);
-        } else {
-            return calMgr.setCalendarPref_(this, "name", aName);
-        }
-    },
-    
+
+/*
+ * Implement calICalendar
+ * (all versions of Lightning)
+ */
     get type() {
         return "thunderbirthday";
     },
@@ -235,7 +155,7 @@ calThunderBirthDay.prototype = {
         
         this.mUri = aUri;
         
-        // the uri of the directories changed, so we need refresh everything
+        // the uri of the directories changed, so we need to refresh everything
         this.refresh();
         
         return aUri;
@@ -257,23 +177,6 @@ calThunderBirthDay.prototype = {
         // only modified by an external application (=the thunderbird adressbook),
         // at least until now.
         return true;
-    },
-    
-    /*
-     * The following two functions for observer handling have been copied without
-     * changes from the google calender provider. For the moment, they just work fine.
-     */
-    addObserver: function cTBD_addObserver(aObserver) {
-       if (this.mObservers.indexOf(aObserver) == -1) {
-            this.mObservers.push(aObserver);
-        }
-    },
-    
-    removeObserver: function cTBD_removeObserver(aObserver) {
-        function cTBD_removeObserver_remove(obj) {
-            return ( obj != aObserver );
-        }
-        this.mObservers = this.mObservers.filter(cTBD_removeObserver_remove);
     },
     
     /*
@@ -572,11 +475,6 @@ calThunderBirthDay.prototype = {
               + (endTime - startTime) + " ms.");
     },
     
-    get sendItipInvitations() {
-        // We don't "handle invitations internally"...
-        return true;
-    },
-    
     /**
      * refresh
      * Reloads all external data, i.e. the directories and the abCards.
@@ -589,42 +487,12 @@ calThunderBirthDay.prototype = {
         this.loadBaseItems();
         
         // tell observers to reload everything
-        this.notifyObservers("onLoad", [this]);
+        this.mObservers.notify("onLoad", [this]);
     },
     
-    /*
-     * Batch mode is not implemented. I don't know, whether we even need this at all...
-     */
-    startBatch: function cTBD_startBatch() {
-        MyLOG(4,"TBD: startBatch() called");
-        this.notifyObservers("onStartBatch", []);
-    },
-    
-    endBatch: function cTBD_endBatch() {
-        MyLOG(4,"TBD: endBatch() called");
-        this.notifyObservers("onEndBatch", []);
-    },
-
 /*
  * Helpers
  */
-    /**
-     * notifyObservers
-     * Notify this calendar's observers that a specific event has happened
-     *
-     * @param aEvent       The Event that happened.
-     * @param aArgs        An array of arguments that is passed to the observer
-     */
-    notifyObservers: function cTBD_notifyObservers(aEvent, aArgs) {
-        for each (var obs in this.mObservers) {
-            try {
-                obs[aEvent].apply(obs, aArgs);
-            } catch (e) {
-                Components.utils.reportError(e);
-            }
-        }
-    },
-    
     /**
      * loadDirectories
      * Opens the directories stored at this.mUri and stores them as 
@@ -645,7 +513,7 @@ calThunderBirthDay.prototype = {
         // "All adressbooks" has been chosen
         if (this.mUri.spec == "moz-abdirectory://") {
             var abRootDir = abRdf.GetResource("moz-abdirectory://")
-                                .QueryInterface(Components.interfaces.nsIAbDirectory);
+                                 .QueryInterface(Components.interfaces.nsIAbDirectory);
             
             // todo: this command is responsible for 240ms of the 320ms loading time!
             var abDirectoryEnum = abRootDir.childNodes
@@ -689,10 +557,25 @@ calThunderBirthDay.prototype = {
         
         // iterate through directories
         for (var i = 0; i < this.mDirectories.length; i++) {
-            
-            var abCardsEnum = this.mDirectories[i].childCards
-                                  .QueryInterface(Components.interfaces
-                                                            .nsIEnumerator);
+            // Get card iterator, fails if file doesn't exist
+            try {
+                var abCardsEnum = this.mDirectories[i].childCards
+                                    .QueryInterface(Components.interfaces
+                                                                .nsIEnumerator);
+            } catch (e if e.name == "NS_ERROR_FILE_NOT_FOUND") {
+                MyLOG(0, "TBD: Address book could not be loaded. File not found: " +
+                      this.mUri.spec);
+                
+                // Remove non-existing directory
+                this.mDirectories.splice(i--, 1);
+                
+                // Deactivate calendar if no directories left
+                if (this.mDirectories.length == 0) {
+                    MyLOG(1, "TBD: Deactivating calendar at " + this.mUri.spec + ".");
+                    this.setProperty("disabled", true);
+                }
+                continue;
+            }
             
             try {
                 // initialize abCardsEnum (nsIEnumerator stinks)
@@ -938,7 +821,6 @@ calThunderBirthDay.prototype = {
         event.endDate.makeImmutable();
         
         
-        
         // remark:the base items title only consist of the name. Occurrences titles
         // make use of the base items title and append additional information like age
         // and such
@@ -988,6 +870,7 @@ calThunderBirthDay.prototype = {
                        + this.mUri.spec) + "@ThunderBirthDay";
         
         event.calendar = this;
+        
         
         // set "LAST-MODIFIED" at the end, since it get changed when s.th. else is set
         var lastMod = createDateTime();

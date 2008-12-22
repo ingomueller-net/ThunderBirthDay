@@ -9,6 +9,7 @@ Philipp Kewisch -- The author of the google calendar provider, which
 Michael Kurz -- For the active testing and the support in bug smashing!
 edvoldi -- A very eager tester from www.sunbird-kalender.de/forum/
 Babelzilla and the translators there -- See datails in install.rdf
+www.icondrawer.com -- For making the duty free icon used for this extension
 
 And many other testers...
 
@@ -80,6 +81,7 @@ And many other testers...
 |    Resources for developers       |
 +-----------------------------------+
 
+* http://ingomueller.net/mozilla/thunderbirthday -- The projects home page
 * http://rfc.net/rfc2445.html -- RFC2445 - Internet Calendaring and
   Scheduling Core Object Specification (iCalendar)
 * http://lxr.mozilla.org/ -- Source code of Thunderbird and Lighting

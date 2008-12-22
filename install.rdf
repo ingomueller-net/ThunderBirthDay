@@ -41,13 +41,16 @@
     
     <Description about="urn:mozilla:install-manifest">
         <em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-        <em:version>0.2.7</em:version>
+        <em:version>0.2.8</em:version>
         <em:type>2</em:type>
         
         <em:name>ThunderBirthDay</em:name>
         <em:description>Display birthdays from the thunderbird addressbooks as events in lightning.</em:description>
         <em:creator>Ingo Müller</em:creator>
-        <em:homepageURL>https://addons.mozilla.org/en-US/thunderbird/addon/5337</em:homepageURL>
+        <em:homepageURL>http://ingomueller.net/mozilla/thunderbirthday</em:homepageURL>
+        
+        <em:contributor>www.icondrawer.com (icon)</em:contributor>
+        <em:iconURL>chrome://thunderbirthday/content/icon.png</em:iconURL>
         
         <em:translator>agnetao (sv-SE)</em:translator>
         <em:translator>Ahmed (ar)</em:translator>
@@ -80,8 +83,8 @@
             <Description>
                 <!-- Lightning -->
                 <em:id>{e2fda1a4-762b-4020-b5ad-a41df1933103}</em:id>
-                <em:minVersion>0.5</em:minVersion>
-                <em:maxVersion>0.8</em:maxVersion>
+                <em:minVersion>0.7</em:minVersion>
+                <em:maxVersion>0.9</em:maxVersion>
             </Description>
         </em:requires>
     </Description>      

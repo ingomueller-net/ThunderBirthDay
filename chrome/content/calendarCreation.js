@@ -183,7 +183,7 @@ function cTBD_onLocalPageAdvanced() {
     }
     
     // Since Lightning 0.8, this has to be called before the customizePage
-    if (typeof prepareCreateCalendar == "function") prepareCreateCalendar();
+    if (typeof prepareCreateCalendar == "function") return prepareCreateCalendar();
 }
 
 

@@ -71,8 +71,8 @@ var calThunderBirthDayModule = {
     loadUtils: function cTBDM_loadUtils() {
         if (this.mUtilsLoaded)
             return;
-		
-        const scripts = ["calThunderBirthDay.js"];
+
+        const scripts = ["calProviderBase.js","calThunderBirthDay.js"];
 
         var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
                                .getService(Components.interfaces.mozIJSSubScriptLoader);
@@ -80,6 +80,14 @@ var calThunderBirthDayModule = {
         var iosvc = Components.classes["@mozilla.org/network/io-service;1"]
                               .getService(Components.interfaces.nsIIOService);
 
+        // Load Calendar's calUtils.js
+        try {
+            loader.loadSubScript("chrome://calendar/content/calUtils.js", null);
+        } catch (e) {
+            Components.utils.reportError("Error while loading calUtils.js\n");
+            throw e;
+        }
+        
         // Note that unintuitively, __LOCATION__.parent == .
         // We expect to find the subscripts in ./../js
         var appdir = __LOCATION__.parent.parent;
@@ -96,14 +104,6 @@ var calThunderBirthDayModule = {
                 dump("Error while loading " + scriptUri.spec + "\n");
                 throw e;
             }
-        }
-        
-        // Additionally, load Calendar's calUtils.js
-        try {
-            loader.loadSubScript("chrome://calendar/content/calUtils.js", null);
-        } catch (e) {
-            Components.utils.reportError("Error while loading calUtils.js\n");
-            throw e;
         }
         
         this.mUtilsLoaded = true;
