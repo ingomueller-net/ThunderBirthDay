@@ -91,6 +91,7 @@ calThunderBirthDay.prototype = {
     mObservers: null,
     mUri: null,
     mDirectories: null,
+	mBaseItems: null,
 	
 /*
  * Implement calICalendar
@@ -128,43 +129,13 @@ calThunderBirthDay.prototype = {
         return this.mUri;
     },
 	
-	/**
-	 * When (re)setting the adressbooks uri, we collect all the directories
-	 * stored at that uri. This is only one adressbook if the uri is of the form
-	 * "moz-abmdbdirectory://abook.mab" and all directories of the if the
-	 * uri is of the form "moz-abdirectory://".
-	 */
     set uri(aUri) {
 		LOG(2,"TBD: set uri() called: " + aUri.spec);
 		
         this.mUri = aUri;
 		
-		// reset mDirectories
-		this.mDirectories = [];
-		
-		var abRdf = getRDFService();
-		
-		// "All adressbooks" has been chosen
-		if (this.mUri.spec == "moz-abdirectory://") {
-			var abRootDir = abRdf.GetResource("moz-abdirectory://")
-								.QueryInterface(Components.interfaces.nsIAbDirectory);
-			
-			var abDirectoryEnum = abRootDir.childNodes
-								.QueryInterface(Components.interfaces.nsISimpleEnumerator);
-			
-			while (abDirectoryEnum.hasMoreElements()) {
-				var abDir = abDirectoryEnum.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
-				this.mDirectories.push(abDir);
-			}
-		}
-		// One specific adressbook
-		else {
-			var abDir = abRdf.GetResource(this.mUri.spec).QueryInterface(Components.interfaces.nsIAbDirectory);
-			this.mDirectories.push(abDir);
-		}
-		
-		LOG(2,"TBD: uri: stored " + this.mDirectories.length 
-					+ " directories for " + aUri.spec);
+		// the uri of the directories changed, so we need refresh everything
+		this.refresh();
 		
 		return aUri;
     },
@@ -289,6 +260,8 @@ calThunderBirthDay.prototype = {
                                     aRangeStart,
                                     aRangeEnd,
                                     aListener) {
+		var startTime = new Date();
+		
 		try {
 			LOG(1,"TBD: getItems() called: " + aRangeStart.toString() + "-" + aRangeEnd.toString());
 		} catch(e) {
@@ -316,57 +289,29 @@ calThunderBirthDay.prototype = {
 						Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
 			
             
-			// iterate through directories
-			for (var i = 0; i < this.mDirectories.length; i++) {
-				
-				var abCardsEnum = this.mDirectories[i].childCards.
-							QueryInterface(Components.interfaces.nsIEnumerator);
-				
-				try {
-					// initialize abCardsEnum (nsIEnumerator stinks)
-					abCardsEnum.first();
-					
-					// iterate through cards
-					do {
-						var abCard = abCardsEnum.currentItem().
-									QueryInterface(Components.interfaces.nsIAbCard);
-						
-						var baseItem = cTBD_convertAbCardToEvent(abCard);
-						if (!baseItem) continue;	// card couldn't be converted to an event
-						
-						baseItem.calendar = this;
-						baseItem.makeImmutable();
-						
-						
-						// collect occurrences or base item depending on the filter
-						if (itemReturnOccurrences) {
-							var items = cTBD_getOccurencesAsEvents(baseItem, aRangeStart, aRangeEnd);
-						} else {
-							var items = [baseItem];
-						}
-						
-						
-						// report occurrences of this card
-						if (items.length > 0) {
-							LOG(2,"TBD: getItems: returning " + items.length
-										+ " item for " + abCard.displayName);
-							
-							aListener.onGetResult(this,
-												  Cr.NS_OK,
-												  Ci.calIEvent,
-												  null,
-												  items.length,
-												  items);
-						}
-						
-						// abCardsEnum.next() always evaluates as false and will throw an exception when
-						// arrived at the end of the list (nsIEnumerator stinks)
-					} while(abCardsEnum.next() || (aCount == 0 || itemsSent < aCount))
+			// iterate through cards
+			for (var i = 0; i < this.mBaseItems.length && (aCount == 0 || itemsSent < aCount); i++) {
+				// collect occurrences or base item depending on the filter
+				if (itemReturnOccurrences) {
+					var items = cTBD_getOccurencesAsEvents(this.mBaseItems[i], aRangeStart, aRangeEnd);
+				} else {
+					var items = [this.mBaseItems[i]];
 				}
-				// these are exceptions thrown by the nsIEnumerator interface and well known.
-				// apperently the interface can't be used in a clean way... :-/
-				catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
-					LOG(0,"TBD: getItems: exception: nsIEnumerator stinks!!!");
+				
+				
+				// report occurrences of this card
+				if (items.length > 0) {
+					LOG(2,"TBD: getItems: returning " + items.length
+								+ " item for " + this.mBaseItems[i].title);
+					
+					itemsSent += items.length;
+					
+					aListener.onGetResult(this,
+										  Cr.NS_OK,
+										  Ci.calIEvent,
+										  null,
+										  items.length,
+										  items);
 				}
 			}
 			
@@ -384,7 +329,7 @@ calThunderBirthDay.prototype = {
 		// Something went wrong, so notify observers
 		catch (e) {
 			if (e.name == "NS_OK" || e.name == "NS_ERROR_NOT_IMPLEMENTED") {
-				LOG(2,"TBD: getItems: known exception, filter: " + aItemFilter);
+				LOG(1,"TBD: getItems: known exception, filter: " + aItemFilter);
             } else {
 				LOG(5,"TBD: getItems: exception: " + e);
 			}
@@ -396,10 +341,22 @@ calThunderBirthDay.prototype = {
                                               null, e.message);
             }
         }
+		
+		var endTime = new Date();
+		LOG(2,"TBD: getItems: returned " + itemsSent + " events in " + (endTime - startTime) + " ms.");
     },
 	
+	/**
+	    * refresh
+	    * Reloads all external data, i.e. the directories and the abCards.
+	    */
     refresh: function cTBD_refresh() {
 		LOG(1,"TBD: refresh() called");
+		
+		//reload directories and ab cards
+		this.loadDirectories();
+		this.loadBaseItems();
+		
 		this.notifyObservers("onLoad", [this]);
 	},
 	
@@ -434,7 +391,99 @@ calThunderBirthDay.prototype = {
                 Components.utils.reportError(e);
             }
         }
-    }
+    },
+	
+	/**
+	    * loadDirectories
+	    * Opens the directories stored at this.mUri and stores them as 
+	    * nsIAbDirectory's in this.mDirectories.
+	    *
+	    * This is only one adressbook if the uri is of the form "moz-abmdbdirectory://abook.mab"
+	    * and all directories of the user if the uri is of the form "moz-abdirectory://".
+	    */
+	loadDirectories: function cTBD_loadDirectories () {
+		var startTime = new Date();
+		
+		// reset mDirectories
+		this.mDirectories = [];
+		
+		var abRdf = getRDFService();
+		
+		// "All adressbooks" has been chosen
+		if (this.mUri.spec == "moz-abdirectory://") {
+			var abRootDir = abRdf.GetResource("moz-abdirectory://")
+								.QueryInterface(Ci.nsIAbDirectory);
+			
+			var abDirectoryEnum = abRootDir.childNodes
+								.QueryInterface(Ci.nsISimpleEnumerator);
+			
+			while (abDirectoryEnum.hasMoreElements()) {
+				var abDir = abDirectoryEnum.getNext().QueryInterface(Ci.nsIAbDirectory);
+				this.mDirectories.push(abDir);
+			}
+		}
+		// One specific adressbook
+		else {
+			var abDir = abRdf.GetResource(this.mUri.spec).QueryInterface(Ci.nsIAbDirectory);
+			this.mDirectories.push(abDir);
+		}
+		
+		var endTime = new Date();
+		
+		LOG(3,"TBD: loaded " + this.mDirectories.length + " directories for " + this.mUri.spec +
+					" in " + (endTime - startTime) + " ms.");
+	},
+	
+	/**
+	    * loadBaseItems
+	    * Iterates through the directories asscociated with this calendar and stores
+	    * base items for all contacts with valid birth date as calIEvent's in this.mBaseItems.
+	    */
+	loadBaseItems: function cTBD_loadBaseItems () {
+		var startTime = new Date();
+		
+		var itemsLoaded = 0;
+		this.mBaseItems = [];
+		
+		// iterate through directories
+		for (var i = 0; i < this.mDirectories.length; i++) {
+			
+			var abCardsEnum = this.mDirectories[i].childCards.
+						QueryInterface(Ci.nsIEnumerator);
+			
+			try {
+				// initialize abCardsEnum (nsIEnumerator stinks)
+				abCardsEnum.first();
+				
+				// iterate through cards
+				do {
+					var abCard = abCardsEnum.currentItem().
+								QueryInterface(Ci.nsIAbCard);
+					
+					var baseItem = cTBD_convertAbCardToEvent(abCard);
+					if (!baseItem) continue;	// card couldn't be converted to an event
+					
+					baseItem.calendar = this;
+					baseItem.makeImmutable();
+					
+					
+					this.mBaseItems.push(baseItem);
+					itemsLoaded++;
+					
+					// abCardsEnum.next() always evaluates as false and will throw an exception when
+					// arrived at the end of the list (nsIEnumerator stinks)
+				} while(abCardsEnum.next() || true)
+			}
+			// these are exceptions thrown by the nsIEnumerator interface and well known.
+			// apperently the interface can't be used in a clean way... :-/
+			catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
+				LOG(0,"TBD: getItems: exception: nsIEnumerator stinks!!!");
+			}
+		}
+		
+		var endTime = new Date();
+		LOG(2,"TBD: loadBaseItems: loaded " + itemsLoaded + " events in " + (endTime - startTime) + " ms.");
+	}
 };
 
 
@@ -478,7 +527,7 @@ function createRecurrenceInfo() {
 /* Shortcut to the RDF service */
 function getRDFService() {
 	return Cc["@mozilla.org/rdf/rdf-service;1"].
-		   getService(Components.interfaces.nsIRDFService);
+		   getService(Ci.nsIRDFService);
 }
 
 
@@ -487,13 +536,13 @@ function getRDFService() {
  */
 
 /**
-* cTBD_convertAbCardToEvent
-* Converts an nsIAbCard into an calIEvent of the birthday with infinite yearly recurrence
-*
- * @param abCard  nsIAbCard interface of an adressbook card
- *
- * @returns  calIEvent of the birthday, not immutable and with no calender property set
-			null if no valid birthday could be found
+   * cTBD_convertAbCardToEvent
+   * Converts an nsIAbCard into an calIEvent of the birthday with infinite yearly recurrence
+   *
+    * @param abCard  nsIAbCard interface of an adressbook card
+    *
+    * @returns  calIEvent of the birthday, not immutable and with no calender property set
+    *			null if no valid birthday could be found
  */
 function cTBD_convertAbCardToEvent(abCard) {
 	
@@ -528,7 +577,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	// this is also false when year, month or day is not set or NaN
 	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
-		LOG(2,"TBD: convert: datum " + year + "-" + month + "-" + day + " nicht valide");
+		LOG(0,"TBD: convert: datum " + year + "-" + month + "-" + day + " nicht valide");
 		return null;
 	}
 	
@@ -541,7 +590,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	event.startDate.isDate = true;
 	event.startDate.normalize();
 	
-	LOG(1,"TBD: convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
+	LOG(0,"TBD: convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
 				+ "-" + abCard.birthDay + " wird zu " + event.startDate.toString());
 	
 	event.endDate = event.startDate.clone();
@@ -579,16 +628,16 @@ function cTBD_convertAbCardToEvent(abCard) {
 }
 
 /**
- * cTBD_getOccurences
- * Returns all occurences of an event in a certain range as items
- *
- * @param aEvent  calIEvent to get the occurrences from
- * @param aRangeStart  calIDateTime indicating the start of the range for the occurrences,
- *				"flooring" to the beginning of the day of aRangeStart
- * @param aRangeEnd  calIDateTime indicating the end of the range for the occurrences
- *
- * @returns calIEvent() which are occurrences of aEvent in the given range
- */
+    * cTBD_getOccurences
+    * Returns all occurences of an event in a certain range as items
+    *
+    * @param aEvent  calIEvent to get the occurrences from
+    * @param aRangeStart  calIDateTime indicating the start of the range for the occurrences,
+    *				"flooring" to the beginning of the day of aRangeStart
+    * @param aRangeEnd  calIDateTime indicating the end of the range for the occurrences
+    *
+    * @returns calIEvent() which are occurrences of aEvent in the given range
+    */
 function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 	// we probably also want birthdays "that already started"
 	// that day, so we let the range start on the beginning of that day
@@ -634,17 +683,17 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 
 
 /**
- * LOG
- * Logs the message aMessage to the error console if aDebugLevel is higher than a certain
- * number, that can be set according to ones suites. As a convention, debug levels can be
- * integers from 0 (tottaly unimportant) to 5 (very important).
- *
- *
- * @param aDebugLevel  Minimum debug level where the message should be shown.
- * @param aMessage  Message to be logged.
- */
+    * LOG
+    * Logs the message aMessage to the error console if aDebugLevel is higher than a certain
+    * number, that can be set according to ones suites. As a convention, debug levels can be
+    * integers from 0 (tottaly unimportant) to 5 (very important).
+    *
+    *
+    * @param aDebugLevel  Minimum debug level where the message should be shown.
+    * @param aMessage  Message to be logged.
+    */
 function LOG(aDebugLevel, aMessage) {
-	if (aDebugLevel >= 0) {
+	if (aDebugLevel >= 1) {
 		Components.utils.reportError(aMessage);
 	}
 }
