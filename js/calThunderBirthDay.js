@@ -500,11 +500,18 @@ calThunderBirthDay.prototype = {
 		LOG(2,"TBD: loadBaseItems: loaded " + itemsLoaded + " events in " + (endTime - startTime) + " ms.");
 		
 		
+		// sort items by their occurence in a year
 		startTime = new Date();
-		this.mBaseItems.sort(function f(a,b) { return a.startDate.yearday - b.startDate.yearday; });
+		this.mBaseItems.sort(function c(a,b) { return cTBD_compareDatesInYear(a.startDate, b.startDate); });
 		endTime = new Date();
 		
 		LOG(2,"TBD: loadBaseItems: sorted in " + (endTime - startTime) + " ms.");
+		
+		// debug:
+		// for (var i = 0; i < this.mBaseItems.length; i++) {
+			// LOG(2,"TBD: sort: " + this.mBaseItems[i].startDate.month + "."
+					// + this.mBaseItems[i].startDate.day + ". = " + this.mBaseItems[i].startDate.yearday);
+		// }
 	},
 	
 	/**
@@ -541,8 +548,8 @@ calThunderBirthDay.prototype = {
 				
 				LOG(0,"TBD: pivot: (" + aResult.startIndex + ") " + this.mBaseItems[aResult.startIndex].startDate);
 				
-				// todo: don't use yearday, which might be wrong in leap years
-				if ((aRangeStart.yearday - this.mBaseItems[aResult.startIndex].startDate.yearday) <= 0) {	// too late
+				if (cTBD_compareDatesInYear(aRangeStart,
+											this.mBaseItems[aResult.startIndex].startDate) <= 0) {	// too late
 					upper = aResult.startIndex;
 				} else {	// too early
 					lower = aResult.startIndex + 1;
@@ -563,7 +570,8 @@ calThunderBirthDay.prototype = {
 				
 				LOG(0,"TBD: pivot: (" + aResult.endIndex + ") " + this.mBaseItems[aResult.endIndex].startDate);
 				
-				if ((aRangeEnd.yearday - this.mBaseItems[aResult.endIndex].startDate.yearday) < 0) {	// too late
+				if (cTBD_compareDatesInYear(aRangeEnd,
+											this.mBaseItems[aResult.endIndex].startDate) < 0) {		// too late
 					upper = aResult.endIndex;
 				} else {	// too early
 					lower = aResult.endIndex + 1;
@@ -577,14 +585,14 @@ calThunderBirthDay.prototype = {
 		
 		var endTime = new Date();
 		
-		
-		// var log = "TBD: pivot: result found in " + (endTime - startTime) + " ms: ";
+		// debug:
+		// var log = "TBD: pivot: result found in " + (endTime - startTime) + " ms: \n";
 		// for (var i = 0; i < this.mBaseItems.length; i++) {
-			// if (i == aResult.startIndex) log += "_" + aRangeStart.yearday + "_<";
-			// if (i == aResult.endIndex) log += "^" + aRangeEnd.yearday + "^<";
-			// log += this.mBaseItems[i].startDate.yearday + "<";
+			// if (i == aResult.startIndex) log += "_" + aRangeStart.month + "." + aRangeStart.day + "._\n";
+			// if (i == aResult.endIndex) log += "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^\n";
+			// log += this.mBaseItems[i].startDate.month + "." + this.mBaseItems[i].startDate.day + ".\n";
 		// }
-		// LOG(1,log);
+		// LOG(0,log);
 		
 		
 		// take care of "carry-over"
@@ -769,8 +777,12 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 			id = Math.round(Math.random() * 1000);
 			
 			startDate = occurrences[i].clone();
+			startDate.makeImmutable();
+			
 			endDate = occurrences[i].clone();
 			endDate.day += 1;
+			endDate.normalize();
+			endDate.makeImmutable();
 			
 			// append age to the title
 			var age = startDate.year - aEvent.startDate.year;
@@ -785,6 +797,27 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 	}
 	
 	return events;
+}
+
+
+/**
+    * cTBD_compareDatesInYear
+    * Compares two given dates and returns -1, 0, 1 to indicate which date occures
+    * first in one year. If aDateTime1 occures earlier in the year than aDateTime2,
+    * it returns -1, if it's vise versa, it returns 1 and if both date are equal (regarding
+    * month and day), it returns 0.
+    *
+    * @param aDateTime1  calIDateTime
+    * @param aDateTime2  calIDateTime
+    *
+    * @returns -1, 0 or 1 indicating which of the dates occures earlier in one year
+    */
+function cTBD_compareDatesInYear(aDateTime1, aDateTime2) {
+	if (aDateTime1.month > aDateTime2.month) return 1;
+	else if (aDateTime1.month < aDateTime2.month) return -1;
+	else if (aDateTime1.day > aDateTime2.day) return 1;
+	else if (aDateTime1.day < aDateTime2.day) return -1;
+	else return 0;
 }
 
 
