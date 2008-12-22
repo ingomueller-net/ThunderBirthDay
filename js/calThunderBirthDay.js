@@ -42,33 +42,8 @@
  * Provider.
  */
 function calThunderBirthDay() {
-    // This is copied from the google calendar provider.
-    this.mObservers = new Array();
-
-    var calObject = this;
-
-    function calAttrHelper(aAttr) {
-        this.getAttr = function calAttrHelper_get() {
-            // Note that you need to declare this in here, to avoid cyclic
-            // getService calls.
-            var calMgr = Components.classes["@mozilla.org/calendar/manager;1"]
-                         .getService(Components.interfaces.calICalendarManager);
-            return calMgr.getCalendarPref(calObject, aAttr);
-        };
-        this.setAttr = function calAttrHelper_set(aValue) {
-            var calMgr = Components.classes["@mozilla.org/calendar/manager;1"]
-                         .getService(Components.interfaces.calICalendarManager);
-            calMgr.setCalendarPref(calObject, aAttr, aValue);
-            return aValue;
-        };
-    }
-
-    var prefAttrs = ["name", "suppressAlarms"];
-    for each (var attr in prefAttrs) {
-        var helper = new calAttrHelper(attr);
-        this.__defineGetter__(attr, helper.getAttr);
-        this.__defineSetter__(attr, helper.setAttr);
-    }
+    this.mObservers  = new Array();
+    this.mProperties = new Array();
 }
 
 calThunderBirthDay.prototype = {
@@ -89,11 +64,134 @@ calThunderBirthDay.prototype = {
     mID: null,
     mObservers: null,
     mUri: null,
+    mProperties: null,
     mDirectories: null,
     mBaseItems: null,
     
 /*
  * Implement calICalendar
+ * (Lightning 0.8+ only)
+ *
+ * The following code is copied from calProviderBase and
+ * slightly modified. See http://lxr.mozilla.org/mozilla1.8/
+ * source/calendar/providers/base/calProviderBase.js
+ */
+    get superCalendar() {
+        // If we have a superCalendar, check this calendar for a superCalendar.
+        // This will make sure the topmost calendar is returned
+        return (this.mSuperCalendar ? this.mSuperCalendar.superCalendar : this);
+    },
+    
+    set superCalendar(val) {
+        return (this.mSuperCalendar = val);
+    },
+
+    getProperty: function cTBD_getProperty(aName) {
+        MyLOG(4, "TBD: getProperty: " + aName);
+        
+        // Constant values
+        switch (aName) {
+            case "readOnly":
+            case "suppressAlarms":
+                return true;
+            case "capabilities.attachments.supported":
+            case "capabilities.priority.supported":
+            case "capabilities.privacy.supported":
+            case "capabilities.tasks.supported":
+            case "requiresNetwork":
+                return false;
+        }
+        
+        // Regular preferences
+        var ret = this.mProperties[aName];
+        if (ret === undefined) {
+            ret = null;
+            if (this.id) {
+                // xxx future: return getPrefSafe("calendars." + this.id +
+                //                                "." + aName, null);
+                ret = getCalendarManager().getCalendarPref_(this, aName);
+                if (ret !== null) {
+                    switch (aName) {
+                        case "relaxedMode":
+                        case "cache.supported":
+                        case "cache.enabled":
+                        case "calendar-main-in-composite":
+                        case "calendar-main-default":
+                            ret = (ret == "true");
+                            break;
+                        case "backup-time":
+                        case "cache.updateTimer":
+                            ret = Number(ret);
+                            break;
+                        }
+                }
+            }
+            this.mProperties[aName] = ret;
+        }
+        return ret;
+    },
+    
+    setProperty: function cTBD_setProperty(aName, aValue) {
+        MyLOG(4, "TBD: setProperty: " + aName);
+        
+        // Constant values
+        switch (aName) {
+            case "readOnly":
+            case "suppressAlarms":
+                return true;
+        }
+        
+        // Regular preferences
+        var oldValue = this.getProperty(aName);
+        if (oldValue != aValue) {
+            this.mProperties[aName] = aValue;
+            if (this.id) {
+                var v = aValue;
+                switch (aName) {
+                    case "relaxedMode":
+                    case "cache.supported":
+                    case "cache.enabled":
+                    case "calendar-main-in-composite":
+                    case "calendar-main-default":
+                        v = (v ? "true" : "false");
+                        break;
+                }
+                // xxx future: setPrefSafe("calendars." + this.id + "." + aName, aValue);
+                getCalendarManager().setCalendarPref_(this, aName, v);
+            }
+            
+            this.notifyObservers("onPropertyChanged",
+                                 [this.superCalendar, aName, aValue, oldValue]);
+        }
+        return aValue;
+    },
+
+    deleteProperty: function cTBD_deleteProperty(aName) {
+        MyLOG(4, "TBD: deleteProperty: " + aName);
+        
+        this.notifyObservers("onPropertyDeleting", [this.superCalendar, aName]);
+        delete this.mProperties[aName];
+        getCalendarManager().deleteCalendarPref_(this, aName);
+    },
+
+/*
+ * Implement calICalendar
+ * (Lightning 0.5-0.7 only)
+ */
+    get suppressAlarms() {
+        // For the moment, ThunderBirthDay doesn't support alarms
+        return true;
+    },
+    
+    set suppressAlarms(v) {
+        // For the moment, ThunderBirthDay doesn't support alarms
+        // so don't accept changes here
+        return true;
+    },
+    
+/*
+ * Implement calICalendar
+ * (both Lightning 0.5-0.7 and 0.8+)
  */
     get id() {
         return this.mID;
@@ -106,25 +204,26 @@ calThunderBirthDay.prototype = {
         return (this.mID = id);
     },
     
-    get readOnly() {
-        // For the moment, ThunderBirthDay is readonly
-        return true;
+    get name() {
+        var calMgr = getCalendarManager();
+        if (calMgr.getCalendarPref) {
+            return calMgr.getCalendarPref(this, "name");
+        } else {
+            return calMgr.getCalendarPref_(this, "name");
+        }
     },
     
-    set readOnly(v) {
-        // For the moment, ThunderBirthDay is readonly, so don't accept
-        // changes to readOnly
-        return true;
+    set name(aName) {
+        var calMgr = getCalendarManager();
+        if (calMgr.setCalendarPref) {
+            return calMgr.setCalendarPref(this, "name", aName);
+        } else {
+            return calMgr.setCalendarPref_(this, "name", aName);
+        }
     },
     
     get type() {
         return "thunderbirthday";
-    },
-    
-    get sendItipInvitations() {
-        // We don't "handle invitations internally", so I *guess* we should
-        // return true
-        return true;
     },
     
     get uri() {
@@ -140,6 +239,17 @@ calThunderBirthDay.prototype = {
         this.refresh();
         
         return aUri;
+    },
+    
+    get readOnly() {
+        // For the moment, ThunderBirthDay is readonly
+        return true;
+    },
+    
+    set readOnly(v) {
+        // For the moment, ThunderBirthDay is readonly, so don't accept
+        // changes to readOnly
+        return true;
     },
     
     get canRefresh() {
@@ -460,6 +570,11 @@ calThunderBirthDay.prototype = {
         var endTime = new Date();
         MyLOG(3,"TBD: getItems: returned " + itemsSent + " events in "
               + (endTime - startTime) + " ms.");
+    },
+    
+    get sendItipInvitations() {
+        // We don't "handle invitations internally"...
+        return true;
     },
     
     /**

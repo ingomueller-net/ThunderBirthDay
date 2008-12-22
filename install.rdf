@@ -41,7 +41,7 @@
     
     <Description about="urn:mozilla:install-manifest">
         <em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-        <em:version>0.2.3</em:version>
+        <em:version>0.2.4</em:version>
         <em:type>2</em:type>
         
         <em:name>ThunderBirthDay</em:name>
@@ -61,6 +61,7 @@
         <em:translator>no_room (es-AR)</em:translator>
         <em:translator>Pedro (it-IT)</em:translator>
         <em:translator>teo (pl-PL)</em:translator>
+        <em:translator>RigoNet (es-ES)</em:translator>
         
         <em:targetApplication>
             <Description>
@@ -76,7 +77,7 @@
                 <!-- Lightning -->
                 <em:id>{e2fda1a4-762b-4020-b5ad-a41df1933103}</em:id>
                 <em:minVersion>0.5</em:minVersion>
-                <em:maxVersion>0.7</em:maxVersion>
+                <em:maxVersion>0.8pre</em:maxVersion>
             </Description>
         </em:requires>
     </Description>      
