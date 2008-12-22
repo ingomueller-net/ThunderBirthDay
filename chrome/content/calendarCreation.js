@@ -194,7 +194,7 @@ function cTBD_preCreateCalendar() {
  * @returns  an nsIURI whose spec is aUriString
  */
 function makeURL(aUriString) {
-    var ioSvc = Cc["@mozilla.org/network/io-service;1"].
-                getService(Ci.nsIIOService);
+    var ioSvc = Components.classes["@mozilla.org/network/io-service;1"].
+                getService(Components.interfaces.nsIIOService);
     return ioSvc.newURI(aUriString, null, null);
 }

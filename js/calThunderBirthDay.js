@@ -51,13 +51,13 @@ function calThunderBirthDay() {
         this.getAttr = function calAttrHelper_get() {
             // Note that you need to declare this in here, to avoid cyclic
             // getService calls.
-            var calMgr = Cc["@mozilla.org/calendar/manager;1"]
-                         .getService(Ci.calICalendarManager);
+            var calMgr = Components.classes["@mozilla.org/calendar/manager;1"]
+                         .getService(Components.interfaces.calICalendarManager);
             return calMgr.getCalendarPref(calObject, aAttr);
         };
         this.setAttr = function calAttrHelper_set(aValue) {
-            var calMgr = Cc["@mozilla.org/calendar/manager;1"]
-                         .getService(Ci.calICalendarManager);
+            var calMgr = Components.classes["@mozilla.org/calendar/manager;1"]
+                         .getService(Components.interfaces.calICalendarManager);
             calMgr.setCalendarPref(calObject, aAttr, aValue);
             return aValue;
         };
@@ -76,9 +76,9 @@ calThunderBirthDay.prototype = {
  * Implement nsISupports
  */
     QueryInterface: function cTBD_QueryInterface(aIID) {
-        if (!aIID.equals(Ci.nsISupports) &&
-            !aIID.equals(Ci.calICalendar)) {
-            throw Cr.NS_ERROR_NO_INTERFACE;
+        if (!aIID.equals(Components.interfaces.nsISupports) &&
+            !aIID.equals(Components.interfaces.calICalendar)) {
+            throw Components.results.NS_ERROR_NO_INTERFACE;
         }
         return this;
     },
@@ -101,7 +101,7 @@ calThunderBirthDay.prototype = {
     
     set id(id) {
         if (this.mID) {
-            throw Cr.NS_ERROR_ALREADY_INITIALIZED;
+            throw Components.results.NS_ERROR_ALREADY_INITIALIZED;
         }
         return (this.mID = id);
     },
@@ -173,26 +173,26 @@ calThunderBirthDay.prototype = {
     adoptItem: function cTBD_adoptItem(aItem, aListener) {
         MyLOG(1,"TBD: adoptItem() called");
         
-        throw Ci.calIErrors.CAL_IS_READONLY;
+        throw Components.interfaces.calIErrors.CAL_IS_READONLY;
     },
     
     addItem: function cTBD_addItem(aItem, aListener) {
         MyLOG(1,"TBD: addItem() called");
         
-        throw Ci.calIErrors.CAL_IS_READONLY;
+        throw Components.interfaces.calIErrors.CAL_IS_READONLY;
     },
     
     modifyItem: function cTBD_modifyItem(aNewItem, aOldItem, aListener) {
         MyLOG(1,"TBD: modifyItem() called: " + aNewItem.icalString + ","
               + aOldItem.icalString);
         
-        throw Ci.calIErrors.CAL_IS_READONLY;
+        throw Components.interfaces.calIErrors.CAL_IS_READONLY;
     },
     
     deleteItem: function cTBD_deleteItem(aItem, aListener) {
         MyLOG(1,"TBD: deleteItem() called: " + aItem.id);
         
-        throw Ci.calIErrors.CAL_IS_READONLY;
+        throw Components.interfaces.calIErrors.CAL_IS_READONLY;
     },
     
     /** 
@@ -207,8 +207,8 @@ calThunderBirthDay.prototype = {
             if (this.mBaseItems[i].id == aId && aListener != null) {
                 // Return item
                 aListener.onGetResult(this,
-                                      Cr.NS_OK,
-                                      Ci.calIEvent,
+                                      Components.results.NS_OK,
+                                      Components.interfaces.calIEvent,
                                       null,
                                       1,
                                       [this.mBaseItems[i]]);
@@ -216,8 +216,9 @@ calThunderBirthDay.prototype = {
                 // Operation completed successfully.
                 if (aListener != null) {
                     aListener.onOperationComplete(this,
-                                                  Cr.NS_OK,
-                                                  Ci.calIOperationListener.GET,
+                                                  Components.results.NS_OK,
+                                                  Components.interfaces
+                                                            .calIOperationListener.GET,
                                                   this.mBaseItems[i].id,
                                                   [this.mBaseItems[i]]);
                 }
@@ -230,8 +231,9 @@ calThunderBirthDay.prototype = {
         // Nothing was found, so report it
         if (aListener != null) {
             aListener.onOperationComplete(this,
-                                          Cr.NS_OK,
-                                          Ci.calIOperationListener.GET,
+                                          Components.results.NS_OK,
+                                          Components.interfaces
+                                                    .calIOperationListener.GET,
                                           null,
                                           null);
         }
@@ -253,7 +255,8 @@ calThunderBirthDay.prototype = {
         getItemTester.prototype = {
             onGetResult: function (aCalendar, aStatus, aItemType,
                                    aDetail, aCount, aItems) {
-                if (aStatus == Cr.NS_OK && aItemType == Ci.calIEvent &&
+                if (aStatus == Components.results.NS_OK &&
+                                aItemType == Components.interfaces.calIEvent &&
                                 aCount == 1 && aItems[0].id &&
                                 aItems[0].id == aItem.id) {
                     MyLOG(3, "TBD: testGetItem: got expected result " + aItems[0].id);
@@ -269,8 +272,9 @@ calThunderBirthDay.prototype = {
             },
             onOperationComplete: function (aCalendar, aStatus, aOperationType,
                                            aId, aDetail) {
-                if (aStatus == Cr.NS_OK &&
-                            aOperationType == Ci.calIOperationListener.GET &&
+                if (aStatus == Components.results.NS_OK &&
+                            aOperationType == Components.interfaces
+                                                        .calIOperationListener.GET &&
                             aDetail[0].id && aDetail[0].id == aItem.id) {
                     MyLOG(3, "TBD: testGetItem: operation completed like expected with "
                           + aDetail[0].id);
@@ -318,22 +322,26 @@ calThunderBirthDay.prototype = {
         try {
             // item base type (event or todo)
             var wantEvents = ((aItemFilter &
-                               Ci.calICalendar.ITEM_FILTER_TYPE_EVENT) != 0);
+                               Components.interfaces.calICalendar
+                                         .ITEM_FILTER_TYPE_EVENT) != 0);
             var wantTodos = ((aItemFilter &
-                              Ci.calICalendar.ITEM_FILTER_TYPE_TODO) != 0);
+                              Components.interfaces.calICalendar
+                                        .ITEM_FILTER_TYPE_TODO) != 0);
             
             // check if events are wanted
             if (!wantEvents && !wantTodos) {
                 // Nothing to do. The onOperationComplete in the catch block
                 // below will catch this.
-                throw new Components.Exception("", Cr.NS_OK);
+                throw new Components.Exception("", Components.results.NS_OK);
             } else if (wantTodos && !wantEvents) {
-                throw new Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
+                throw new Components.Exception("",
+                                Components.results.NS_ERROR_NOT_IMPLEMENTED);
             }
             
             // return occurrences?
             var itemReturnOccurrences = ((aItemFilter &
-                        Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
+                        Components.interfaces.calICalendar
+                                  .ITEM_FILTER_CLASS_OCCURRENCES) != 0);
             
             
             // determine index in this.mBaseItems of first and last element to return
@@ -412,8 +420,8 @@ calThunderBirthDay.prototype = {
                     itemsSent += items.length;
                     
                     aListener.onGetResult(this,
-                                          Cr.NS_OK,
-                                          Ci.calIEvent,
+                                          Components.results.NS_OK,
+                                          Components.interfaces.calIEvent,
                                           null,
                                           items.length,
                                           items);
@@ -424,8 +432,9 @@ calThunderBirthDay.prototype = {
             // Operation completed successfully.
             if (aListener != null) {
                 aListener.onOperationComplete(this,
-                                              Cr.NS_OK,
-                                              Ci.calIOperationListener.GET,
+                                              Components.results.NS_OK,
+                                              Components.interfaces
+                                                        .calIOperationListener.GET,
                                               null,
                                               null);
             }
@@ -442,7 +451,8 @@ calThunderBirthDay.prototype = {
             if (aListener != null) {
                 aListener.onOperationComplete(this,
                                               e.result,
-                                              Ci.calIOperationListener.GET,
+                                              Components.interfaces
+                                                        .calIOperationListener.GET,
                                               null, e.message);
             }
         }
@@ -520,22 +530,25 @@ calThunderBirthDay.prototype = {
         // "All adressbooks" has been chosen
         if (this.mUri.spec == "moz-abdirectory://") {
             var abRootDir = abRdf.GetResource("moz-abdirectory://")
-                                .QueryInterface(Ci.nsIAbDirectory);
+                                .QueryInterface(Components.interfaces.nsIAbDirectory);
             
             // todo: this command is responsible for 240ms of the 320ms loading time!
             var abDirectoryEnum = abRootDir.childNodes
-                                .QueryInterface(Ci.nsISimpleEnumerator);
+                                .QueryInterface(Components.interfaces
+                                                          .nsISimpleEnumerator);
             
             while (abDirectoryEnum.hasMoreElements()) {
                 var abDir = abDirectoryEnum.getNext()
-                                    .QueryInterface(Ci.nsIAbDirectory);
+                                    .QueryInterface(Components.interfaces
+                                                              .nsIAbDirectory);
                 this.mDirectories.push(abDir);
             }
         }
         // One specific adressbook
         else {
             var abDir = abRdf.GetResource(this.mUri.spec)
-                                    .QueryInterface(Ci.nsIAbDirectory);
+                                    .QueryInterface(Components.interfaces
+                                                              .nsIAbDirectory);
             this.mDirectories.push(abDir);
         }
         
@@ -563,7 +576,8 @@ calThunderBirthDay.prototype = {
         for (var i = 0; i < this.mDirectories.length; i++) {
             
             var abCardsEnum = this.mDirectories[i].childCards
-                                  .QueryInterface(Ci.nsIEnumerator);
+                                  .QueryInterface(Components.interfaces
+                                                            .nsIEnumerator);
             
             try {
                 // initialize abCardsEnum (nsIEnumerator stinks)
@@ -572,10 +586,11 @@ calThunderBirthDay.prototype = {
                 // iterate through cards
                 do {
                     var abCard = abCardsEnum.currentItem()
-                                            .QueryInterface(Ci.nsIAbCard);
+                                            .QueryInterface(Components.interfaces
+                                                                      .nsIAbCard);
                     
                     var baseItem = this.convertAbCardToEvent(abCard);
-                    if (!baseItem) continue;    // card couldn't be converted to an event
+                    if (!baseItem) continue;  // card couldn't be converted to an event
                     
                     MyLOG(4,"TBD: loaded event for " + baseItem.title + " ("
                           + baseItem.id + ")");
@@ -584,8 +599,9 @@ calThunderBirthDay.prototype = {
                     this.mBaseItems.push(baseItem);
                     itemsLoaded++;
                     
-                    // abCardsEnum.next() always evaluates as false and will throw an
-                    // exception when arrived at the end of the list (nsIEnumerator stinks)
+                    // abCardsEnum.next() always evaluates as false and will
+                    // throw an exception when arrived at the end of the list
+                    // (nsIEnumerator stinks)
                 } while(abCardsEnum.next() || true)
             }
             // these are exceptions thrown by the nsIEnumerator interface and well known.
@@ -874,8 +890,8 @@ calThunderBirthDay.prototype = {
 
 /* Shortcut to the RDF service */
 function getRDFService() {
-    return Cc["@mozilla.org/rdf/rdf-service;1"]
-           .getService(Ci.nsIRDFService);
+    return Components.classes["@mozilla.org/rdf/rdf-service;1"]
+           .getService(Components.interfaces.nsIRDFService);
 }
 
 
@@ -965,14 +981,15 @@ function cTBD_compareDatesInYear(aDateTime1, aDateTime2) {
 function MyLOG(aPriority, aMessage) {
     if (this.mVerbosity == null) {
         // load verbosity from pref tree
-        this.mVerbosity = Cc["@mozilla.org/preferences-service;1"]
-                                .getService(Ci.nsIPrefService)
+        this.mVerbosity = Components.classes["@mozilla.org/preferences-service;1"]
+                                .getService(Components.interfaces.nsIPrefService)
                                 .getBranch("extensions.thunderbirthday.")
                                 .getIntPref("verbosity");
         
         // load console service
-        this.mConsoleService = Cc["@mozilla.org/consoleservice;1"]
-                                    .getService(Ci.nsIConsoleService);
+        this.mConsoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                    .getService(Components.interfaces
+                                                          .nsIConsoleService);
     }
     
     if (aPriority <= this.mVerbosity) {
@@ -998,13 +1015,13 @@ MyLOG.prototype.mConsoleService = null;
  */
 function md5(aString) {
     // convert string to byte array
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+    var converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"]
         .createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
 
     converter.charset = "UTF-8";
     
     var data = converter.convertToByteArray(aString, {});
-    var ch = Cc["@mozilla.org/security/hash;1"]
+    var ch = Components.classes["@mozilla.org/security/hash;1"]
                        .createInstance(Components.interfaces.nsICryptoHash);
     
     // calculate hash
