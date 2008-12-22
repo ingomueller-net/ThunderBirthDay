@@ -22,9 +22,6 @@ And many other testers...
 	  not entirely unique. One idea is to generate a random MD5 hash and
 	  save it in a new field with the nsIAddrDatabase interface.
 
-* calICalendar.getItem()
-	- Not sure how to test this...
-
 * calICalendar.getItems()
 	- Until now, the occurrences of a recurring item as returned by the
 	  TBD data provider do not have the same title as the base item. Users
@@ -41,6 +38,10 @@ And many other testers...
 |     Possible new features         |
 +-----------------------------------+
 
+* The description on AMO has to be improved: it has to be clear to the user
+  that ThunderBirthDay provides a new type of calendar and that it doesn't
+  just export events.
+
 * Maybe we can use nsIAddrDBListener to track changes to the address
   book, so there is no need to refresh anymore, or at least, changes
   will be tracked immediately.
@@ -56,6 +57,20 @@ And many other testers...
 * Replace the modify dialog of events for TBD-calenders with the
   property dialog of the concerned addressbook card (not sure about
   that one yet).
+
+* Maybe it's a good idea to create calendar with default settings when
+  installing ThunderBirthDay, as some people don't seem to read the
+  instructions carefully enough and don't know how it works then.
+
+* Extend properties dialog of thunderbirthday-calendars, adding possibility
+  to change addressbook, birthdate field and other settings.
+
+* Implement alarms, with global and per calendar settings. Maybe the
+  necessary data can be saved in new fields with the nsIAddrDatabase
+  interface. Reminder-emails might also be a nice feature.
+
+* Let the user set all kind of things, globally and per calendar:
+  (1) the format of the events title, (2) category, ...
   
 +-----------------------------------+
 |    Resources for developers       |

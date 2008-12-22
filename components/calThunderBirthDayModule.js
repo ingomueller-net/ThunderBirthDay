@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  *   Philipp Kewisch (mozilla@kewis.ch)
- * Portions created by the Initial Developer are Copyright (C) 2006
+ * Portions created by the Initial Developer are Copyright (C) 2007
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -97,7 +97,15 @@ var calThunderBirthDayModule = {
                 throw e;
             }
         }
-
+        
+        // Additionally, load Calendar's calUtils.js
+        try {
+            loader.loadSubScript("chrome://calendar/content/calUtils.js", null);
+        } catch (e) {
+            Components.utils.reportError("Error while loading calUtils.js\n");
+            throw e;
+        }
+        
         this.mUtilsLoaded = true;
     },
 
