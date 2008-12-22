@@ -292,10 +292,10 @@ calThunderBirthDay.prototype = {
 			
 			var abDirectoryEnum = this.getAbDirectoryEnum();
 			
+			// iterate through directories
 			while (abDirectoryEnum.hasMoreElements()) {
 				var abDir = abDirectoryEnum.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
 				
-				// Components.utils.reportError ("ab: " + abDir.dirName);
 				// with (abDir.directoryProperties) Components.utils.reportError ("ab: " + dirType + fileName + URI);
 				
 				var abCardsEnum = abDir.childCards.QueryInterface(Components.interfaces.nsIEnumerator);
@@ -303,6 +303,7 @@ calThunderBirthDay.prototype = {
 					// initialize abCardsEnum (nsIEnumerator stinks)
 					abCardsEnum.first();
 					
+					// iterate through cards
 					do {
 						var abCard = abCardsEnum.currentItem().QueryInterface(Components.interfaces.nsIAbCard);
 						
@@ -312,25 +313,40 @@ calThunderBirthDay.prototype = {
 						
 						var items = cTBD_getOccurencesAsEvents(baseItem,aRangeStart,aRangeEnd);
 						
-						Components.utils.reportError("getItems: returning items: " + items.length);
-						
-						aListener.onGetResult(this,
-											  Cr.NS_OK,
-											  Ci.calIEvent,
-											  null,
-											  items.length,
-											  items);
+						// report occurrences of this card
+						if (items.length > 0) {
+							Components.utils.reportError("getItems: returning items: " + items.length);
+							
+							aListener.onGetResult(this,
+												  Cr.NS_OK,
+												  Ci.calIEvent,
+												  null,
+												  items.length,
+												  items);
+						}
 						
 						// abCardsEnum.next() will throw an exception when arrived at the end of the list (nsIEnumerator stinks)
 					} while(abCardsEnum.next() || true)
-				} catch (e) {
+				}
+				// these are exceptions thrown by the nsIEnumerator interface and well known
+				// apperently the interface can't be used in a clean way... :-/
+				catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
 					// nsIEnumerator stinks!!!
-					Components.utils.reportError("getItems: exception: " + e.message + e.stack);
+					// Components.utils.reportError("getItems: exception: nsIEnumerator stinks!!!");
+				} catch (e) {
+					Components.utils.reportError("getItems: exception: "
+								+ ", name: " + e.name 
+								+ ", message: " + e.message 
+								+ ", stack: " + e.stack 
+								+ ", result: " + e.result 
+								+ ", data: " + e.data 
+								+ ", inner: " + e.inner);
 				}
 			}
 			
 			Components.utils.reportError("getItems: sending done message");
-			// Operation Completed successfully.
+			
+			// Operation completed successfully.
 			if (aListener != null) {
 				aListener.onOperationComplete(this,
 											  Cr.NS_OK,
@@ -511,21 +527,23 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 		
 		// todo: id
 		// todo: title (display age)
-		newItem.id = Math.round(Math.random() * 1000);
-		
-		newItem.startDate = occurrences[i].clone();
-		newItem.endDate = occurrences[i].clone();
-		newItem.endDate.day += 1;
-		
-		newItem.recurrenceInfo = aEvent.recurrenceInfo;
-		newItem.parentItem = aEvent;
-		newItem.makeImmutable();
-		
-		events.push(newItem);
+		with (newItem) {
+			id = Math.round(Math.random() * 1000);
+			
+			startDate = occurrences[i].clone();
+			endDate = occurrences[i].clone();
+			endDate.day += 1;
+			
+			// todo: not sure what recurrenceId dose...
+			recurrenceId = startDate.clone();
+			
+			recurrenceInfo = aEvent.recurrenceInfo;
+			parentItem = aEvent;
+			makeImmutable();
+			
+			events.push(newItem);
+		}
 	}
 	
 	return events;
 }
-	
-	
-	
