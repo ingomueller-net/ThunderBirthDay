@@ -52,6 +52,8 @@
                    next="customizePage"
                    label="&wizard.label;"
                    onpageshow="cTBD_checkRequiredLocal();"
+                   onpagerewound="cTBD_onLocalPageRewound();"
+                   onpageadvanced="cTBD_onLocalPageAdvanced();"
                    description="&wizard.description;">
             <description>&cTBD_locationpage.description;</description>
             
