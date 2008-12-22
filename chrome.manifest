@@ -8,11 +8,13 @@ locale thunderbirthday en-US chrome/locale/en-US/
 locale thunderbirthday es-AR chrome/locale/es-AR/
 locale thunderbirthday es-ES chrome/locale/es-ES/
 locale thunderbirthday fr-FR chrome/locale/fr-FR/
+locale thunderbirthday hu-HU chrome/locale/hu-HU/
 locale thunderbirthday it-IT chrome/locale/it-IT/
 locale thunderbirthday ja-JP chrome/locale/ja-JP/
 locale thunderbirthday nl-NL chrome/locale/nl-NL/
 locale thunderbirthday pl-PL chrome/locale/pl-PL/
 locale thunderbirthday pt-BR chrome/locale/pt-BR/
 locale thunderbirthday pt-PT chrome/locale/pt-PT/
+locale thunderbirthday sk-SK chrome/locale/sk-SK/
 locale thunderbirthday sv-SE chrome/locale/sv-SE/
 locale thunderbirthday zh-CN chrome/locale/zh-CN/

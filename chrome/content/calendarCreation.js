@@ -112,10 +112,13 @@ function cTBD_fillDropDownBox() {
 function cTBD_onInitialAdvance() {
     var type = document.getElementById('calendar-type').selectedItem.value;
     var page = document.getElementsByAttribute('pageid', 'initialPage')[0];
-    if (type == 'local')
+    if (type == 'local') {
+        // since Lightning 0.8, the replaced function has to call this
+        if (typeof floating == "function") prepareCreateCalendar();
         page.next = 'cTBD_locationPageLocal';
-    else
+    } else {
         page.next = 'locationPage';
+    }
 }
 
 /**
