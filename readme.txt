@@ -13,43 +13,37 @@ And many other testers...
 
 
 +-----------------------------------+
-|       Important issues            |
+|         Known issues              |
 +-----------------------------------+
 
 * calIItemBase.id
-	- At the beginning, it was random number between 0 and 1000.
-	  Now, it's a random md5 hash for the base event. Is that a
-	  good idea? As the hashes change after the calender is refreshed,
-	  it may be not.
-	- What is it for? How long is one ID assossiated with its
-	  event? Does this assossiation end with the termination of
-	  Thunderbird or does one event have to have the same ID every
-	  time Thunderbird starts?
-	- I don't have any idea how to generate a unique hash for one
-	  addressbook card which doesn't change when details of the card
-	  are changed.
-	- I suppose that the occurrences of a recurring item have to have
-	  the same id as the base item. Is that right?
+	- The ID is not unique yet. Until now, it is an MD5 hash of the Name,
+	  the birthday and the calendar's URI. This makes it pretty unique, but
+	  not entirely unique. One idea is to generate a random MD5 hash and
+	  save it in a new field with the nsIAddrDatabase interface.
 
 * calICalendar.getItem()
-	- When is function used?
-	- I suppose that it should return only base items of recurring
-	  items and no occurrences. Is that right?
+	- Not sure how to test this...
 
 * calICalendar.getItems()
-	- Do the occurrences of a recurring item have to have the same
-	  title as the base item? I guess that normaly, they have, because
-	  views and other users of a calender can call item.getOccurrences()
-	  which copies the title of the base item. What if I do need the
-	  different occurrences to have a custom title?
+	- Until now, the occurrences of a recurring item as returned by the
+	  TBD data provider do not have the same title as the base item. Users
+	  retrieving occurences with the calIItemBase.getOccurrencesBetween()
+	  will get occurrences with the same title as the base item (no age in
+	  parenthesis). Maybe implementing the calIItemBase interface is a
+	  solution...
 
-* I'm sure there's a lot more. Anyway, if you read this and have any
-  ideas, suggestions, critics or whatsoever, please let me know!
+* Anyway, if you read this and have any ideas, suggestions, critics or
+  whatsoever, please let me know!
 
 
 +-----------------------------------+
 |     Possible new features         |
 +-----------------------------------+
+
+* Maybe we can use nsIAddrDBListener to track changes to the address
+  book, so there is no need to refresh anymore, or at least, changes
+  will be tracked immediately.
 
 * Possibility to choose a user defined field where the birthday is
   stored instead of the mostly unaccessible fields birthday, birthmonth
@@ -62,3 +56,14 @@ And many other testers...
 * Replace the modify dialog of events for TBD-calenders with the
   property dialog of the concerned addressbook card (not sure about
   that one yet).
+  
++-----------------------------------+
+|    Resources for developers       |
++-----------------------------------+
+
+* http://rfc.net/rfc2445.html -- RFC2445 - Internet Calendaring and
+  Scheduling Core Object Specification (iCalendar)
+* http://lxr.mozilla.org/ -- Source code of Thunderbird and Lighting
+* http://lxr.mozilla.org/mozilla/source/calendar/base/public/calICalendar.idl --
+  Specification of the calICalendar interface - the main interface TBD is
+  implementing.

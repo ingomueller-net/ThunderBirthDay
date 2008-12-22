@@ -38,15 +38,13 @@
 
 /**
  * calThunderBirthDay
- * This Implements a calICalendar object adapted to the Thunderbirthday
+ * This implements the calICalendar interface adapted to the Thunderbirthday
  * Provider.
  *
- * Note: I copied this part from the Google Calendar Provider without
+ * Note: I copied the first part from the Google Calendar Provider without
  * understanding it 100%. It just works for the moment...
  */
 function calThunderBirthDay() {
-	LOG(2,"TBD: calThunderBirthDay() called");
-    
 	this.mObservers = new Array();
 
     var calObject = this;
@@ -105,8 +103,7 @@ calThunderBirthDay.prototype = {
 	
     set id(id) {
         if (this.mID) {
-			LOG(3, "TBD: exception: NS_ERROR_ALREADY_INITIALIZED");
-            throw Cr.NS_ERROR_ALREADY_INITIALIZED;
+			throw Cr.NS_ERROR_ALREADY_INITIALIZED;
 		}
         return (this.mID = id);
     },
@@ -135,7 +132,7 @@ calThunderBirthDay.prototype = {
     },
 	
     set uri(aUri) {
-		LOG(2,"TBD: set uri() called: " + aUri.spec);
+		LOG(3,"TBD: set uri: " + aUri.spec);
 		
         this.mUri = aUri;
 		
@@ -177,19 +174,23 @@ calThunderBirthDay.prototype = {
 	 * idea?
 	 */
     adoptItem: function cTBD_adoptItem(aItem, aListener) {
-		/* // Return null, as we don't want any new events to be created
-		if (aListener != null) {
-			aListener.onOperationComplete(this,
-										  Cr.NS_OK,
-										  Ci.calIOperationListener.ADD,
-										  null,
-										  null);
-		}
+		// This might be an alternative way to implement these functions. If it is implemented
+		// this way, views are using calIItemBase.getOccurrences() at one point, which returns
+		// events which have the title of their base item instead of one with the contact's age
+		// appended. I've got to think of a solution for this...
 		
-		this.notifyObservers("onAddItem", null);		// I didn't find something like "onAdoptItem", so I guess this is the right event.
-		
-		// The following code was used by the google calender provider when a calender was readonly.
-		// I think that this solution is not optimal, as it causes an ugly error message. */
+		/*
+		* // Return null, as we don't want any new events to be created
+		* if (aListener != null) {
+		* 	aListener.onOperationComplete(this,
+		* 								  Cr.NS_OK,
+		* 								  Ci.calIOperationListener.ADD,
+		* 								  null,
+		* 								  null);
+		* }
+		* 
+		* this.notifyObservers("onAddItem", null);		// I didn't find something like "onAdoptItem", so I guess this is the right event.
+		*/
 		
 		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
 		
@@ -205,7 +206,7 @@ calThunderBirthDay.prototype = {
 	},
 	
     addItem: function cTBD_addItem(aItem, aListener) {
-		LOG(2,"TBD: addItem() called");
+		LOG(3,"TBD: addItem() called");
 		
 		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
         
@@ -221,7 +222,7 @@ calThunderBirthDay.prototype = {
     },
 	
     modifyItem: function cTBD_modifyItem(aNewItem, aOldItem, aListener) {
-		LOG(2,"TBD: modifyItem() called: " + aNewItem.icalString + "," + aOldItem.icalString);
+		LOG(3,"TBD: modifyItem() called: " + aNewItem.icalString + "," + aOldItem.icalString);
         
 		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
         
@@ -237,7 +238,7 @@ calThunderBirthDay.prototype = {
 	},
 	
     deleteItem: function cTBD_deleteItem(aItem, aListener) {
-		LOG(2,"TBD: deleteItem() called: " + aItem.id);
+		LOG(3,"TBD: deleteItem() called: " + aItem.id);
         
 		e = new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
         
@@ -252,13 +253,12 @@ calThunderBirthDay.prototype = {
 		}
     },
 	
-	//Todo: untested! How can I test this function?
 	/** 
 	    * cTBD_getItem
 	    * Iterates throu this.mBaseItems and returns the first item with matching id.
 	    */
     getItem: function cTBD_getItem(aId, aListener) {
-		LOG(2,"TBD: getItem() called");
+		LOG(3,"TBD: getItem() called");
 		
 		// Iterate throu this.mBaseItems and return item with matching id
 		for (var i = 0; i < this.mBaseItems.length; i++) {
@@ -295,6 +295,63 @@ calThunderBirthDay.prototype = {
 		}
     },
 	
+	/**
+	    * testGetItem
+	    * Test the getItem method aCount times and logs the result with
+	    * our LOG function. Of course, this test doesn't make that much
+	    * sense because it was written after the function itself was...
+	    *
+	    * @param aCount    Number of test runs of getItem
+	    */
+	testGetItem: function cTBD_testGetItem(aCount) {
+		if (this.mBaseItems.length == 0) return;
+		
+		// build a listener, which will get the result of getItem 
+		function getItemTester (aItem) {}
+		getItemTester.prototype = {
+			onGetResult: function (aCalendar, aStatus, aItemType, aDetail, aCount, aItems) {
+				if (aStatus == Cr.NS_OK && aItemType == Ci.calIEvent
+								&& aCount == 1 && aItems[0].id
+								&& aItems[0].id == aItem.id) {
+					LOG(3, "TBD: testGetItem: got expected result " + aItems[0].id);
+				} else {
+					LOG(0, "TBD: testGetItem: got unexpected result ("
+								+ "aCalendar: " + aCalendar
+								+ ", aStatus: " + aStatus
+								+ ", aItemType: " + aItemType
+								+ ", aDetail: " + aDetail
+								+ ", aCount: " + aCount
+								+ ", aItems: " + aItems + ")");
+				}
+			},
+			onOperationComplete: function (aCalendar, aStatus, aOperationType, aId, aDetail) {
+				if (aStatus == Cr.NS_OK
+								&& aOperationType == Ci.calIOperationListener.GET
+								&& aDetail[0].id && aDetail[0].id == aItem.id) {
+					LOG(3, "TBD: testGetItem: operation completed like expected with " + aDetail[0].id);
+				} else {
+					LOG(0, "TBD: testGetItem: operation completed unsuccessfull ("
+								+ "aCalendar: " + aCalendar
+								+ ", aStatus: " + aStatus
+								+ ", aOperationType: " + aOperationType
+								+ ", aId: " + aId
+								+ ", aDetail: " + aDetail + ")");
+				}
+			}
+		}
+		
+		if (!aCount) aCount = 1;
+		
+		for (var i = 0; i < aCount; i++) {
+			// get random item
+			var index = Math.ceil(Math.random() * this.mBaseItems.length);
+			var aItem = this.mBaseItems[index];
+			LOG(3,"TBD: testGetItem: picking item " + index + " of " + this.mBaseItems.length);
+			
+			this.getItem(aItem.id, new getItemTester(aItem));
+		}
+	},
+	
     getItems: function cTBD_getItems(aItemFilter,
                                     aCount,
                                     aRangeStart,
@@ -303,10 +360,11 @@ calThunderBirthDay.prototype = {
 		var startTime = new Date();
 		
 		try {
-			LOG(1,"TBD: getItems() called: " + aRangeStart.toString() + "-" + aRangeEnd.toString());
+			LOG(4,"TBD: getItems() called: " + aRangeStart.toString() + "-" + aRangeEnd.toString());
 		} catch(e) {
-			LOG(1,"TBD: getItems() called");
+			LOG(4,"TBD: getItems() called");
 		}
+		
 		var itemsSent = 0;			// count items sent to the listener, so it doesn't exceed aCount
 		
         try {
@@ -343,23 +401,23 @@ calThunderBirthDay.prototype = {
 			log += (empty ? "---- empty -----\n" : "");
 			
 			for (var i = 0; i < this.mBaseItems.length; i++) {
-				if (i == rangeIndices.startIndex && !empty) log += "(" + i + ") " + "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n";
+				if (i == rangeIndices.startIndex && !empty) log += "(" + i + ") " + "_" + aRangeStart.month + "." + aRangeStart.day + "._ from here\n";
 				
 				if (empty && !done && cTBD_compareDatesInYear(this.mBaseItems[i].startDate, aRangeStart) > 0) {
 					done = true;
-					log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+					log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ from here\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ to here\n";
 				}
 				
 				log += "(" + i + ") " + this.mBaseItems[i].startDate.month + "." + this.mBaseItems[i].startDate.day + ".\n";
-				if (i == (rangeIndices.endIndex % this.mBaseItems.length) && !empty) log += "(" + i + ") " + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+				if (i == (rangeIndices.endIndex % this.mBaseItems.length) && !empty) log += "(" + i + ") " + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ to here\n";
 			}
 			
 			if (!done && empty) {
 				done = true;
-				log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ von hier\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ bis hier\n";
+				log += "_" + aRangeStart.month + "." + aRangeStart.day + "._ from here\n" + "^" + aRangeEnd.month + "." + aRangeEnd.day + ".^ to here\n";
 			}
 			
-			LOG(1,log); */
+			LOG(4,log); */
 			
 			
 			// iterate through cards in this.mBaseItems
@@ -381,8 +439,8 @@ calThunderBirthDay.prototype = {
 				
 				// report occurrences of this card
 				if (items.length > 0) {
-					LOG(2,"TBD: getItems: returning " + items.length
-								+ " item for " + this.mBaseItems[i].title);
+					// LOG(3,"TBD: getItems: returning " + items.length
+								// + " item for " + this.mBaseItems[i].title);
 					
 					itemsSent += items.length;
 					
@@ -409,9 +467,9 @@ calThunderBirthDay.prototype = {
 		// Something went wrong, so notify observers
 		catch (e) {
 			if (e.name == "NS_OK" || e.name == "NS_ERROR_NOT_IMPLEMENTED") {
-				LOG(1,"TBD: getItems: known exception, filter: " + aItemFilter);
+				LOG(4,"TBD: getItems: known exception, filter: " + aItemFilter);
             } else {
-				LOG(5,"TBD: getItems: exception: " + e);
+				LOG(0,"TBD: getItems: exception: " + e);
 			}
 			
 			if (aListener != null) {
@@ -423,7 +481,7 @@ calThunderBirthDay.prototype = {
         }
 		
 		var endTime = new Date();
-		LOG(2,"TBD: getItems: returned " + itemsSent + " events in " + (endTime - startTime) + " ms.");
+		LOG(3,"TBD: getItems: returned " + itemsSent + " events in " + (endTime - startTime) + " ms.");
     },
 	
 	/**
@@ -431,7 +489,7 @@ calThunderBirthDay.prototype = {
 	    * Reloads all external data, i.e. the directories and the abCards.
 	    */
     refresh: function cTBD_refresh() {
-		LOG(1,"TBD: refresh() called");
+		LOG(4,"TBD: refresh() called");
 		
 		//reload directories and ab cards
 		this.loadDirectories();
@@ -445,12 +503,12 @@ calThunderBirthDay.prototype = {
 	 * Batch mode is not implemented. I don't know, whether we even need this at all...
 	 */
     startBatch: function cTBD_startBatch() {
-		LOG(1,"TBD: startBatch() called");
+		LOG(4,"TBD: startBatch() called");
         this.notifyObservers("onStartBatch", []);
     },
 	
     endBatch: function cTBD_endBatch() {
-		LOG(1,"TBD: endBatch() called");
+		LOG(4,"TBD: endBatch() called");
         this.notifyObservers("onEndBatch", []);
     },
 
@@ -495,6 +553,7 @@ calThunderBirthDay.prototype = {
 			var abRootDir = abRdf.GetResource("moz-abdirectory://")
 								.QueryInterface(Ci.nsIAbDirectory);
 			
+			// todo: this command is responsible for 240ms of the 320ms loading time!
 			var abDirectoryEnum = abRootDir.childNodes
 								.QueryInterface(Ci.nsISimpleEnumerator);
 			
@@ -511,7 +570,7 @@ calThunderBirthDay.prototype = {
 		
 		var endTime = new Date();
 		
-		LOG(3,"TBD: loaded " + this.mDirectories.length + " directories for " + this.mUri.spec +
+		LOG(2,"TBD: loaded " + this.mDirectories.length + " directories for " + this.mUri.spec +
 					" in " + (endTime - startTime) + " ms.");
 	},
 	
@@ -543,13 +602,10 @@ calThunderBirthDay.prototype = {
 					var abCard = abCardsEnum.currentItem().
 								QueryInterface(Ci.nsIAbCard);
 					
-					var baseItem = cTBD_convertAbCardToEvent(abCard);
+					var baseItem = this.convertAbCardToEvent(abCard);
 					if (!baseItem) continue;	// card couldn't be converted to an event
 					
-					baseItem.calendar = this;
-					baseItem.makeImmutable();
-					
-					LOG(2,"TBD: loaded event for " + baseItem.title);
+					LOG(4,"TBD: loaded event for " + baseItem.title + " (" + baseItem.id + ")");
 					
 					
 					this.mBaseItems.push(baseItem);
@@ -562,12 +618,12 @@ calThunderBirthDay.prototype = {
 			// these are exceptions thrown by the nsIEnumerator interface and well known.
 			// apperently the interface can't be used in a clean way... :-/
 			catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
-				LOG(0,"TBD: loadBaseItems: exception: nsIEnumerator stinks!!!");
+				LOG(5,"TBD: loadBaseItems: exception: nsIEnumerator stinks!!!");
 			}
 		}
 		
 		var endTime = new Date();
-		LOG(2,"TBD: loadBaseItems: loaded " + itemsLoaded + " events in " + (endTime - startTime) + " ms.");
+		LOG(3,"TBD: loadBaseItems: loaded " + itemsLoaded + " events in " + (endTime - startTime) + " ms.");
 		
 		
 		// sort items by their occurence in a year
@@ -575,13 +631,7 @@ calThunderBirthDay.prototype = {
 		this.mBaseItems.sort(function c(a,b) { return cTBD_compareDatesInYear(a.startDate, b.startDate); });
 		endTime = new Date();
 		
-		LOG(2,"TBD: loadBaseItems: sorted in " + (endTime - startTime) + " ms.");
-		
-		// debug:
-		// for (var i = 0; i < this.mBaseItems.length; i++) {
-			// LOG(2,"TBD: sort: " + this.mBaseItems[i].startDate.month + "."
-					// + this.mBaseItems[i].startDate.day + ". = " + this.mBaseItems[i].startDate.yearday);
-		// }
+		LOG(3,"TBD: loadBaseItems: sorted in " + (endTime - startTime) + " ms.");
 	},
 	
 	/**
@@ -610,7 +660,7 @@ calThunderBirthDay.prototype = {
 		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year > 1 ||
 					(aRangeEnd.year - aRangeStart.year == 1 && aRangeEnd.month >= aRangeStart.month) ) {
 			
-			LOG(1,"TBD: pivot: range is more than a year.");
+			LOG(4,"TBD: pivot: range is more than a year.");
 			
 			// if it doesn't make sense, just "mark" the whole base items array
 			aResult.startIndex = 0;
@@ -619,7 +669,7 @@ calThunderBirthDay.prototype = {
 		
 		// No need to calculate anything either if there are no items
 		else if (this.mBaseItems.length == 0) {
-			LOG(1,"TBD: pivot: No items in calender.");
+			LOG(4,"TBD: pivot: No items in calender.");
 			
 			// No element in range, so let startIndex be greater than endIndex
 			aResult.startIndex = -1;
@@ -637,7 +687,7 @@ calThunderBirthDay.prototype = {
 			while (upper != lower) {
 				pivotIndex = Math.floor((upper + lower)/2);
 				
-				LOG(0,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
+				LOG(5,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
 				
 				if (cTBD_compareDatesInYear(aRangeStart,
 											this.mBaseItems[pivotIndex].startDate) <= 0) {	// too late
@@ -658,7 +708,7 @@ calThunderBirthDay.prototype = {
 			while (upper != lower) {
 				pivotIndex = Math.ceil((upper + lower)/2);
 				
-				LOG(0,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
+				LOG(5,"TBD: pivot: (" + pivotIndex + ") " + this.mBaseItems[pivotIndex].startDate);
 				
 				if (cTBD_compareDatesInYear(aRangeEnd,
 											this.mBaseItems[pivotIndex].startDate) < 0) {		// too late
@@ -676,7 +726,7 @@ calThunderBirthDay.prototype = {
 			if ((aResult.startIndex == this.mBaseItems.length && aResult.endIndex == -1) ||
 						(aResult.endIndex < aResult.startIndex &&
 						 cTBD_compareDatesInYear(aRangeEnd, aRangeStart) > 0 ) ) {
-				LOG(1,"TBD: pivot: empty range (" + (aResult.startIndex == this.mBaseItems.length && aResult.endIndex == -1) + "," + (aResult.endIndex < aResult.startIndex) + "," + (cTBD_compareDatesInYear(aRangeEnd, aRangeStart) > 0 ) + "," + aResult.startIndex + "," + aResult.endIndex + ")");
+				LOG(4,"TBD: pivot: empty range (" + (aResult.startIndex == this.mBaseItems.length && aResult.endIndex == -1) + "," + (aResult.endIndex < aResult.startIndex) + "," + (cTBD_compareDatesInYear(aRangeEnd, aRangeStart) > 0 ) + "," + aResult.startIndex + "," + aResult.endIndex + ")");
 				
 				// No element in range, so let startIndex be greater than endIndex
 				aResult.startIndex = -1;
@@ -685,25 +735,129 @@ calThunderBirthDay.prototype = {
 				// No element after the aRangeStart, so start at the next element is the first in the next year
 				aResult.startIndex = 0;
 				
-				LOG(1,"TBD: pivot: no element after range start");
+				LOG(4,"TBD: pivot: no element after range start");
 			} else if (aResult.endIndex == -1) {
 				// No Element before aRangeEnd, so end at the last element of the year before
 				aResult.endIndex = this.mBaseItems.length - 1;
 				
-				LOG(1,"TBD: pivot: no element before range end");
+				LOG(4,"TBD: pivot: no element before range end");
 			} else if (aResult.endIndex < aResult.startIndex) {
 				// Range has items in two years (and is therefore around new silvester/year), so there is a "carry-over"
 				aResult.endIndex += this.mBaseItems.length;
 				
-				LOG(1,"TBD: pivot: range has carry over.");
+				LOG(4,"TBD: pivot: range has carry over.");
 			} else {
 				// Regular range, nothing to do
-				LOG(1,"TBD: pivot: regular range");
+				LOG(4,"TBD: pivot: regular range");
 			}
 		}
 		
 		var endTime = new Date();
-		LOG(1,"TBD: calculateRangeIndices run in " + (endTime - startTime) + "ms.");
+		LOG(4,"TBD: calculateRangeIndices run in " + (endTime - startTime) + "ms.");
+	},
+	
+	/**
+	   * convertAbCardToEvent
+	   * Converts an nsIAbCard into an calIEvent of the birthday with infinite yearly recurrence
+	   *
+	    * @param abCard  nsIAbCard interface of an adressbook card
+	    *
+	    * @returns  calIEvent of the birthday, null if no valid birthday could be found
+	 */
+	convertAbCardToEvent: function cTBD_convertAbCardToEvent(abCard) {
+		
+		var event = createEvent();
+		
+		
+		// Search for valid date.
+		var year = parseInt(abCard.birthYear,10);
+		var month = parseInt(abCard.birthMonth,10) - 1;	// month is zero-based
+		var day = parseInt(abCard.birthDay,10);
+		
+		// This is also false when year, month or day is not set or NaN.
+		if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
+			LOG(5,"TBD: convert: date " + year + "-" + month + "-" + day + " not valid");
+			return null;
+		}
+		
+		
+		// Set start and end date.
+		event.startDate = createDateTime();
+		event.startDate.year = year;
+		event.startDate.month = month;
+		event.startDate.day = day;
+		event.startDate.isDate = true;
+		
+		// normalize is needed in lightning 0.5, but has been removed in lightning 0.7
+		if (event.startDate.normalize) event.startDate.normalize();
+		event.startDate.makeImmutable();
+		
+		LOG(5,"TBD: convert: date " + abCard.birthYear + "-" + abCard.birthMonth 
+					+ "-" + abCard.birthDay + " has been converted to " + event.startDate.toString());
+		
+		event.endDate = event.startDate.clone();
+		event.endDate.day += 1;							// all-day events end 1 day after they began
+		
+		// normalize is needed in lightning 0.5, but has been removed in lightning 0.7
+		if (event.endDate.normalize) event.endDate.normalize();
+		event.endDate.makeImmutable();
+		
+		
+		
+		// remark:the base items title only consist of the name. Occurrences titles
+		// make use of the base items title and append additional information like age and such
+		
+		// choose best field of the abCard for the title
+		with (abCard) var possibleTitles = [displayName,			// one of these fields (except nickname) has
+											nickName,				// to be set for every card
+											(firstName && lastName ? firstName + " " + lastName : null),
+											firstName,
+											lastName,
+											primaryEmail,
+											company]
+		for (var i = 0; i < possibleTitles.length; i++) {
+			if (possibleTitles[i]) {
+				event.title = possibleTitles[i];
+				break;
+			}
+		}
+		
+		
+		// set recurrence information
+		event.recurrenceInfo = createRecurrenceInfo();
+		event.recurrenceInfo.item = event;
+		
+		var recRule = createRecurrenceRule();
+			recRule.type = "YEARLY";
+			recRule.interval = 1;
+			recRule.count = -1;
+		
+		event.recurrenceInfo.insertRecurrenceItemAt(recRule, 0);
+		
+		// as the actual birthday, this event is the start of the recurrence
+		event.recurrenceStartDate = event.startDate.clone();
+		
+		
+		// additional info
+		event.lastModifiedTime = createDateTime();
+		event.lastModifiedTime.nativeTime = abCard.lastModifiedDate * 1000 * 1000;
+		event.lastModifiedTime.makeImmutable();
+		
+		if(abCard.webPage2)			// webPage2 is home web page
+			event.setProperty("URL", abCard.webPage2);
+		
+		event.privacy = "PRIVATE";
+		
+		
+		// Id of the event = MD5 sum depending of the persons name, his/her birthday and the calendar URI
+		event.id = md5(event.title + event.startDate.year + event.startDate.month + event.startDate.day
+					   + this.mUri.spec) + "@ThunderBirthDay";
+		
+		event.calendar = this;
+		event.makeImmutable();
+		
+		
+		return event;
 	}
 };
 
@@ -757,98 +911,6 @@ function getRDFService() {
  */
 
 /**
-   * cTBD_convertAbCardToEvent
-   * Converts an nsIAbCard into an calIEvent of the birthday with infinite yearly recurrence
-   *
-    * @param abCard  nsIAbCard interface of an adressbook card
-    *
-    * @returns  calIEvent of the birthday, not immutable and with no calender property set
-    *			null if no valid birthday could be found
- */
-function cTBD_convertAbCardToEvent(abCard) {
-	
-	var event = createEvent();
-	
-	event.id = md5(Math.random());
-	
-	
-	// remark:the base items title only consist of the name. Occurrences titles
-	// make use of the base items title and append additional information like age and such
-	
-	// choose best field of the abCard for the title
-	with (abCard) var possibleTitles = [displayName,			// one of these fields (except nickname) has
-										nickName,				// to be set for every card
-										(firstName && lastName ? firstName + " " + lastName : null),
-										firstName,
-										lastName,
-										primaryEmail,
-										company]
-	for (var i = 0; i < possibleTitles.length; i++) {
-		if (possibleTitles[i]) {
-			event.title = possibleTitles[i];
-			break;
-		}
-	}
-	
-	
-	//search for valid date
-	var year = parseInt(abCard.birthYear,10);
-	var month = parseInt(abCard.birthMonth,10) - 1;	// month is zero-based
-	var day = parseInt(abCard.birthDay,10);
-	
-	// this is also false when year, month or day is not set or NaN
-	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
-		LOG(0,"TBD: convert: date " + year + "-" + month + "-" + day + " not valid");
-		return null;
-	}
-	
-	
-	// set start and end date
-	event.startDate = createDateTime();
-	event.startDate.year = year;
-	event.startDate.month = month;
-	event.startDate.day = day;
-	event.startDate.isDate = true;
-	event.startDate.normalize();
-	
-	LOG(0,"TBD: convert: date " + abCard.birthYear + "-" + abCard.birthMonth 
-				+ "-" + abCard.birthDay + " has been converted to " + event.startDate.toString());
-	
-	event.endDate = event.startDate.clone();
-	event.endDate.day += 1;							// all-day events end 1 day after they began
-	
-	
-	
-	// set recurrence information
-	event.recurrenceInfo = createRecurrenceInfo();
-	event.recurrenceInfo.item = event;
-	
-	var recRule = createRecurrenceRule();
-		recRule.type = "YEARLY";
-		recRule.interval = 1;
-		recRule.count = -1;
-	
-	event.recurrenceInfo.insertRecurrenceItemAt(recRule, 0);
-	
-	// as the actual birthday, this event is the start of the recurrence
-	event.recurrenceStartDate = event.startDate.clone();
-	
-	
-	// additional info
-	event.lastModifiedTime = createDateTime();
-	event.lastModifiedTime.nativeTime = abCard.lastModifiedDate * 1000 * 1000;
-	
-	if(abCard.webPage2)			// webPage2 is home web page
-		event.setProperty("URL", abCard.webPage2);
-	
-	event.privacy = "PRIVATE";
-	
-	
-	return event;
-}
-
-
-/**
     * cTBD_getOccurencesFromEvent
     * Returns all occurences of an event in a certain range as items. In fact, this is an extended
     * calIRecurrenceInfo.getOccurrences() as it appends the age of the contact to its title, plus
@@ -866,10 +928,11 @@ function cTBD_getOccurencesFromEvent(aEvent, aRangeStart, aRangeEnd) {
 	// that day, so we let the range start on the beginning of that day
 	var allDayRangeStart = aRangeStart.clone();
 	allDayRangeStart.isDate = true;
+	allDayRangeStart.makeImmutable();
 	
 	
 	// get occurences
-	var occurrences = aEvent.recurrenceInfo.getOccurrences(aRangeStart, aRangeEnd, 0, {});
+	var occurrences = aEvent.recurrenceInfo.getOccurrences(allDayRangeStart, aRangeEnd, 0, {});
 	
 	for (var i = 0; i < occurrences.length; i++) {
 		occurrences[i] = occurrences[i].clone();
@@ -881,9 +944,6 @@ function cTBD_getOccurencesFromEvent(aEvent, aRangeStart, aRangeEnd) {
 			
 			makeImmutable();
 		}
-		
-		LOG(0,"TBD: created occurence with id " + occurrences[i].id +
-					" belonging to base event with id " + aEvent.id);
 	}
 	
 	return occurrences;
@@ -917,25 +977,37 @@ function cTBD_compareDatesInYear(aDateTime1, aDateTime2) {
 
 /**
     * LOG
-    * Logs the message aMessage to the console if aDebugLevel is higher than a certain
-    * number, that can be set according to ones suites. As a convention, debug levels can be
-    * integers from 0 (totaly unimportant) to 5 (very important). Only messages with debug
-    * level 5 are shown as errors, other messages as notices.
+    * Logs the message aMessage to the console if aPriority is lower than the preference
+    * extensions.thunderbirthday.verbosity. As a convention, priority is an integer
+    * from 0 (very important) to 5 (totally unimportant). Only messages with debug
+    * level 0 are shown as errors, other messages as notices.
     *
-    * @param aDebugLevel  Minimum debug level where the message should be shown.
-    * @param aMessage  Message to be logged.
+    * @param aPriority  Priority of the message (small values mean high priority)
+    * @param aMessage  Message to be logged
     */
-function LOG(aDebugLevel, aMessage) {
-	if (aDebugLevel >= 5) {
-		if (aDebugLevel < 5) {
-			var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-										 .getService(Components.interfaces.nsIConsoleService);
-			consoleService.logStringMessage(aMessage);
-		} else {
+function LOG(aPriority, aMessage) {
+	if (this.mVerbosity == null) {
+		// load verbosity from pref tree
+		this.mVerbosity = Cc["@mozilla.org/preferences-service;1"].
+								getService(Ci.nsIPrefService).
+								getBranch("extensions.thunderbirthday.").
+								getIntPref("verbosity");
+		
+		// load console service
+		this.mConsoleService = Cc["@mozilla.org/consoleservice;1"].
+										getService(Ci.nsIConsoleService);
+	}
+	
+	if (aPriority <= this.mVerbosity) {
+		if (aPriority == 0) {
 			Components.utils.reportError(aMessage);
+		} else {
+			this.mConsoleService.logStringMessage(aMessage);
 		}
 	}
 }
+LOG.prototype.mVerbosity = null;
+LOG.prototype.mConsoleService = null;
 
 
 /**

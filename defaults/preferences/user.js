@@ -34,4 +34,4 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-pref("extensions.{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}.description", "chrome://thunderbirthday/locale/install.properties");
+pref("extensions.thunderbirthday.verbosity", 0);
