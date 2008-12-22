@@ -41,7 +41,7 @@
 	
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-		<em:version>0.1.11a</em:version>
+		<em:version>0.1.11b</em:version>
 		<em:type>2</em:type>
 		
 		<em:name>ThunderBirthDay</em:name>
@@ -50,12 +50,13 @@
 		
 		<em:translator>Ahmed (ar)</em:translator>
 		<em:translator>Alf (nl-NL)</em:translator>
-		<em:translator>myahoo (and others) (fr-FR)</em:translator>
-		<em:translator>Pedro (it-IT)</em:translator>
 		<em:translator>drry (ja-JP)</em:translator>
-		<em:translator>teo (pl-PL)</em:translator>
+		<em:translator>fernph (pt-BR)</em:translator>
 		<em:translator>lloco (pt-PT)</em:translator>
+		<em:translator>myahoo (and others) (fr-FR)</em:translator>
 		<em:translator>no_room (es-AR)</em:translator>
+		<em:translator>Pedro (it-IT)</em:translator>
+		<em:translator>teo (pl-PL)</em:translator>
 		
 		<em:targetApplication>
 			<Description>
