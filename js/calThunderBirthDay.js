@@ -532,9 +532,18 @@ calThunderBirthDay.prototype = {
 	calculateRangeIndices: function cTBD_calculateRangeIndices (aRangeStart, aRangeEnd, aResult) {
 		var startTime = new Date();
 		
-		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year >= 2) { /* todo: || mehr als ein jahr */
+		// check whether it makes sense to calculate the indices
+		// it doesn't make sens if the range is not set or (roughly) longer than a year
+		if (!aRangeStart || !aRangeEnd || aRangeEnd.year - aRangeStart.year >= 2 ||
+					(aRangeEnd.year - aRangeStart.year == 1 && aRangeEnd.month <= aRangeStart.month) ||
+					this.mBaseItems.length == 0) {
+			
+			LOG(1,"TBD: range is more than a year.");
+			
+			// if it doesn't make sense, just "mark" the whole base items array
 			aResult.startIndex = 0;
 			aResult.endIndex = this.mBaseItems.length;
+			
 		} else {		// range is less than a year
 			aResult.startIndex;		// index of the first element in the range
 			aResult.endIndex;		// index of the first element after the range
@@ -556,7 +565,12 @@ calThunderBirthDay.prototype = {
 				}
 			}
 			
-			aResult.startIndex = lower;		// == upper
+			if (lower == this.mBaseItems.length) {
+				// no element found, so just take last one
+				aResult.startIndex = this.mBaseItems.length - 1;
+			} else {
+				aResult.startIndex = lower;		// == upper
+			}
 			
 			LOG(1,"TBD: first element in range starts " + this.mBaseItems[aResult.startIndex].startDate);
 			
@@ -578,7 +592,12 @@ calThunderBirthDay.prototype = {
 				}
 			}
 			
-			aResult.endIndex = lower;		// == upper
+			if (lower == this.mBaseItems.length) {
+				// no element found, so just take last one
+				aResult.endIndex = this.mBaseItems.length - 1;
+			} else {
+				aResult.endIndex = lower;		// == upper
+			}
 			
 			LOG(1,"TBD: last element in range starts " + this.mBaseItems[aResult.endIndex].startDate);
 		}
