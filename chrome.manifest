@@ -3,6 +3,7 @@ overlay chrome://calendar/content/calendarCreation.xul chrome://thunderbirthday/
 locale thunderbirthday ar chrome/locale/ar/
 locale thunderbirthday ca-AD chrome/locale/ca-AD/
 locale thunderbirthday cs-CZ chrome/locale/cs-CZ/
+locale thunderbirthday da-DK chrome/locale/da-DK/
 locale thunderbirthday de-DE chrome/locale/de-DE/
 locale thunderbirthday en-US chrome/locale/en-US/
 locale thunderbirthday es-AR chrome/locale/es-AR/
