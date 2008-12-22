@@ -321,6 +321,7 @@ calThunderBirthDay.prototype = {
             }
 			
             // return occurrences?
+			// todo: so only return occurrences
             var itemReturnOccurrences = ((aItemFilter &
                 Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
 			
@@ -342,6 +343,9 @@ calThunderBirthDay.prototype = {
 						var abCard = abCardsEnum.currentItem().QueryInterface(Components.interfaces.nsIAbCard);
 						
 						var baseItem = cTBD_convertAbCardToEvent(abCard);
+						
+						if (!baseItem) continue;	// card couldn't be converted to an event
+						
 						baseItem.calendar = this;
 						baseItem.makeImmutable();
 						
@@ -349,7 +353,8 @@ calThunderBirthDay.prototype = {
 						
 						// report occurrences of this card
 						if (items.length > 0) {
-							Components.utils.reportError("getItems: returning items: " + items.length);
+							Components.utils.reportError("getItems: returning " + items.length
+										+ " item for " + abCard.displayName);
 							
 							aListener.onGetResult(this,
 												  Cr.NS_OK,
@@ -359,7 +364,8 @@ calThunderBirthDay.prototype = {
 												  items);
 						}
 						
-						// abCardsEnum.next() will throw an exception when arrived at the end of the list (nsIEnumerator stinks)
+						// abCardsEnum.next() will (hopefully) throw an exception when
+						// arrived at the end of the list (nsIEnumerator stinks)
 					} while(abCardsEnum.next() || true)
 				}
 				// these are exceptions thrown by the nsIEnumerator interface and well known
@@ -489,30 +495,59 @@ function getRDFService() {
 *
  * @param abCard  nsIAbCard interface of an adressbook card
  *
- * @returns  calIEvent of the birhtday, not immutable and with no calender property set
+ * @returns  calIEvent of the birthday, not immutable and with no calender property set
+			null if no valid birthday could be found
  */
 function cTBD_convertAbCardToEvent(abCard) {
-	Components.utils.reportError("convert: called");
 	
 	var event = createEvent();
 	
-	// todo: id, title
+	// todo: id
 	event.id = Math.round(Math.random() * 1000);
-	event.title = abCard.displayName + "s Geburtstag";
+	
+	
+	// remark:the base items title only consist of the name. Occurrences titles
+	// make use of the base items title and append additional information like age and such
+	
+	// choose best field of the abCard for the title
+	with (abCard) var possibleTitles = [displayName,			// one of these fields (except nickname) has
+										nickName,				// to be set for every card
+										(firstName && lastName ? firstName + " " + lastName : null),
+										firstName,
+										lastName,
+										primaryEmail,
+										company]
+	for (var i = 0; i < possibleTitles.length; i++) {
+		if (possibleTitles[i]) {
+			event.title = possibleTitles[i];
+			break;
+		}
+	}
+	
+	//search for valid date
+	var year = parseInt(abCard.birthYear);
+	var month = parseInt(abCard.birthMonth) - 1;	// month is zero-based
+	var day = parseInt(abCard.birthDay);
+	
+	// this is also false when year, month or day is not set or NaN
+	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
+		Components.utils.reportError("convert: datum " + year + "-" + month + "-" + day + " nicht valide");
+		return null;
+	}
 	
 	
 	// set start and end date
 	event.startDate = createDateTime();
-	with (event.startDate) {
-		year = parseInt(abCard.birthYear);
-		month = parseInt(abCard.birthMonth) - 1;		// month is zero-based
-		day = parseInt(abCard.birthDay);
-		isDate = true;
-		normalize();
-	}
+	event.startDate.year = year;
+	event.startDate.month = month;
+	event.startDate.day = day;
+	event.startDate.isDate = true;
+	event.startDate.normalize();
+	// Components.utils.reportError("convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
+				// + "-" + abCard.birthDay + " wird zu " + event.startDate.toString());
 	
 	event.endDate = event.startDate.clone();
-	event.endDate.day += 1;								// all-day events end 1 day after the began
+	event.endDate.day += 1;							// all-day events end 1 day after they began
 	
 	
 	// set recurrence information
@@ -526,8 +561,19 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	event.recurrenceInfo.insertRecurrenceItemAt(recRule, 0);
 	
+	// as the actual birthday, this event is the start of the recurrence
+	event.recurrenceStartDate = event.startDate.clone();
 	
-	Components.utils.reportError("convert: returning event");
+	
+	// additional info
+	event.lastModifiedTime = createDateTime();
+	event.lastModifiedTime.nativeTime = abCard.lastModifiedDate * 1000 * 1000;
+	
+	if(abCard.webPage2)			// webPage2 is home web page
+		event.setProperty("URL", abCard.webPage2);
+	
+	event.privacy = "PRIVATE";
+	
 	
 	return event;
 }
@@ -559,6 +605,7 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 	var events = [];
 	
 	for (var i = 0; i < occurrences.length; i++) {
+		// todo: use createProxy()
 		var newItem = aEvent.clone();
 		
 		// todo: id
