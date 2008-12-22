@@ -1,2 +1,4 @@
 content thunderbirthday chrome/content/
 overlay chrome://calendar/content/calendarCreation.xul chrome://thunderbirthday/content/calendarCreation.xul
+locale thunderbirthday de chrome/locale/de/
+locale thunderbirthday en chrome/locale/en/

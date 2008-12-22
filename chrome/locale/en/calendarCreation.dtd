@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
-
-<!-- ***** BEGIN LICENSE BLOCK *****
+﻿<!-- ***** BEGIN LICENSE BLOCK *****
    - Version: MPL 1.1/GPL 2.0/LGPL 2.1
    -
    - The contents of this file are subject to the Mozilla Public License Version
@@ -36,34 +34,7 @@
    -
    - ***** END LICENSE BLOCK ***** -->
 
-<!DOCTYPE dialog 
-[
-    <!ENTITY % dtd1 SYSTEM "chrome://thunderbirthday/locale/calendarCreation.dtd" > %dtd1;
-	<!-- Include original localization files, so original lables can be used -->
-    <!ENTITY % dtd2 SYSTEM "chrome://calendar/locale/calendarCreation.dtd" > %dtd2;
-    <!ENTITY % dtd3 SYSTEM "chrome://calendar/locale/calendar.dtd" > %dtd3;
-]>
-
-<overlay id="cTBD_calendarCreation" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-	<wizard id="calendar-wizard" onload="cTBD_loadCalendarCreation();">
-		<script type="application/x-javascript" src="chrome://thunderbirthday/content/calendarCreation.js"/>
-		
-		<wizardpage pageid="cTBD_locationPageLocal"
-	               next="customizePage"
-	               label="&wizard.label;"
-				   onpageshow="cTBD_checkRequiredLocal();"
-	               description="&wizard.description;">
-	        <description>&cTBD_locationpage.description;</description>
-			
-			<radiogroup id="cTBD-calendar-format" onselect="cTBD_onChangeFormatSelection();" onchange="cTBD_checkRequiredLocal();">
-				<radio value="default" label="&cTBD_locationpage.format.default;" selected="true"/>
-				<radio value="thunderbirthday" label="&cTBD_locationpage.format.thunderbirthday;"/>
-			</radiogroup>
-			
-			<menulist id="cTBD-abook-uri" label="&cTBD_locationpage.chooseAddressbook;" hidden="true">
-				<menupopup id="cTBD-abook-uri-popup" oncommand="cTBD_checkRequiredLocal();">
-				</menupopup>
-			</menulist>
-	   </wizardpage>
-   </wizard>
-</overlay>
+<!ENTITY cTBD_locationpage.description "Please choose the type of your calendar.">
+<!ENTITY cTBD_locationpage.format.default "Lightning calendar (default)">
+<!ENTITY cTBD_locationpage.format.thunderbirthday "Birthdays from the Thunderbird addressbook">
+<!ENTITY cTBD_locationpage.chooseAddressbook "Choose addressbook:">

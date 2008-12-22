@@ -18,7 +18,8 @@
  * Portions created by the Initial Developer are Copyright (C) 2006
  * the Initial Developer. All Rights Reserved.
  *
- * Contributor(s): Ingo Mueller
+ * Contributor(s):
+ *	Ingo Mueller (thunderbirthday at ingomueller dot net)
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -34,10 +35,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+/*
+ * The following code is copied from the Google Calender Provider. I don't
+ * know at all, how it works, but it loads my module, so I'm happy with it :-)
+ */
 var cTBD_classInfo = {
      calThunderBirthDay: {
         getInterfaces: function cI_cTBD_getInterfaces (count) {
-			Components.utils.reportError("tb: getInterfaces() called");
             var ifaces = [
                 Components.interfaces.nsISupports,
                 Components.interfaces.calICalendar,
@@ -48,7 +52,6 @@ var cTBD_classInfo = {
         },
 
         getHelperForLanguage: function (language) {
-			Components.utils.reportError("tb: getHelperForLanguage() called");
             return null;
         },
 
@@ -66,11 +69,9 @@ var calThunderBirthDayModule = {
     mUtilsLoaded: false,
 
     loadUtils: function cTBDM_loadUtils() {
-		Components.utils.reportError("tb: loadUtils() called");
         if (this.mUtilsLoaded)
             return;
 		
-		// todo:
         const scripts = ["calThunderBirthDay.js"];
 
         var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
@@ -101,7 +102,6 @@ var calThunderBirthDayModule = {
     },
 
     unregisterSelf: function cTBDM_unregisterSelf(aComponentManager) {
-		Components.utils.reportError("tb: unregisterSelf() called");
         aComponentManager = aComponentManager
                             .QueryInterface(Components.interfaces.nsIComponentRegistrar);
         for each (var component in cTBD_classInfo) {
@@ -113,15 +113,12 @@ var calThunderBirthDayModule = {
                                              aFileSpec,
                                              aLocation,
                                              aType) {
-		Components.utils.reportError("tb: registerSelf() called");
 		aComponentManager = aComponentManager
                             .QueryInterface(Components.interfaces.nsIComponentRegistrar);
 
         for each (var component in cTBD_classInfo) {
             dump("Registering " + component.classDescription + "\n");
 
-			Components.utils.reportError("Registering " + component.classDescription);
-            
             aComponentManager.registerFactoryLocation(
                 component.classID,
                 component.classDescription,
@@ -133,7 +130,6 @@ var calThunderBirthDayModule = {
     },
 
     makeFactoryFor: function cTBDM_makeFactoryFor(aConstructor) {
-		Components.utils.reportError("tb: makeFactoryFor() called");
         var factory = {
             QueryInterface: function (aIID) {
                 if (!aIID.equals(Components.interfaces.nsISupports) &&
@@ -154,7 +150,6 @@ var calThunderBirthDayModule = {
     getClassObject: function cTBDM_getClassObject(aComponentManager,
                                                  aCID,
                                                  aIID) {
-		Components.utils.reportError("tb: getClassObject() called");
         if (!aIID.equals(Components.interfaces.nsIFactory))
             throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
 
@@ -169,12 +164,10 @@ var calThunderBirthDayModule = {
     },
 
     canUnload: function(aComponentManager) {
-		Components.utils.reportError("tb: canUnload() called");
         return true;
     }
 };
 
 function NSGetModule(aComponentManager, aFileSpec) {
-	Components.utils.reportError("tb: NSGetModule() called");
     return calThunderBirthDayModule;
 }

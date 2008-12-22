@@ -11,16 +11,16 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Google Calendar Provider code.
+ * The Original Code is Thunderbirthday Provider code.
  *
  * The Initial Developer of the Original Code is
- *   Philipp Kewisch (mozilla@kewis.ch)
- * Portions created by the Initial Developer are Copyright (C) 2006
+ *	Ingo Mueller (thunderbirthday at ingomueller dot net)
+ * Portions created by the Initial Developer are Copyright (C) 2007
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *   Joey Minta <jminta@gmail.com>
- *   Ingo Mueller
+ *	Philipp Kewisch (mozilla@kewis.ch), developper of the Google
+ *		Calender Provider this extension is (vaguely) based on
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -45,7 +45,7 @@
  * understanding it 100%. It just works for the moment...
  */
 function calThunderBirthDay() {
-	Components.utils.reportError("tb: calThunderBirthDay() called");
+	LOG(2,"TBD: calThunderBirthDay() called");
     
 	this.mObservers = new Array();
 
@@ -77,7 +77,6 @@ function calThunderBirthDay() {
 
 calThunderBirthDay.prototype = {
 	QueryInterface: function cTBD_QueryInterface(aIID) {
-		// Components.utils.reportError("tb: calThunderBirthDay.prototype.QueryInterface() called");
         if (!aIID.equals(Ci.nsISupports) &&
             !aIID.equals(Ci.calICalendar)) {
             throw Cr.NS_ERROR_NO_INTERFACE;
@@ -97,40 +96,35 @@ calThunderBirthDay.prototype = {
  * Implement calICalendar
  */
     get id() {
-		// Components.utils.reportError("tb: get id() called: " + this.mID);
         return this.mID;
     },
 	
     set id(id) {
-		// Components.utils.reportError("tb: set id() called: " + id);
-        if (this.mID)
+        if (this.mID) {
+			LOG(3, "TBD: exception: NS_ERROR_ALREADY_INITIALIZED");
             throw Cr.NS_ERROR_ALREADY_INITIALIZED;
+		}
         return (this.mID = id);
     },
 	
     get readOnly() {
-		// Components.utils.reportError("tb: get readOnly() called");
         return true;
     },
 	
     set readOnly(v) {
-		Components.utils.reportError("tb: set readOnly() called : " + v);
-        // todo: return this.mReadOnly = v;
 		return true;
     },
 	
     get type() {
-		Components.utils.reportError("tb: get type() called");
         return "thunderbirthday";
     },
 	
     get sendItipInvitations() {
-		Components.utils.reportError("tb: sendItipInvitations() called");
-        return false;
+		// We don't "handle invitations internally", so I *guess* we should return true
+        return true;
     },
 	
     get uri() {
-		// Components.utils.reportError("tb: get uri() called: " + this.mUri.spec);
         return this.mUri;
     },
 	
@@ -141,7 +135,7 @@ calThunderBirthDay.prototype = {
 	 * uri is of the form "moz-abdirectory://".
 	 */
     set uri(aUri) {
-		// Components.utils.reportError("tb: set uri() called: " + aUri.spec);
+		LOG(2,"TBD: set uri() called: " + aUri.spec);
 		
         this.mUri = aUri;
 		
@@ -169,14 +163,13 @@ calThunderBirthDay.prototype = {
 			this.mDirectories.push(abDir);
 		}
 		
-		Components.utils.reportError("uri: stored " + this.mDirectories.length 
+		LOG(2,"TBD: uri: stored " + this.mDirectories.length 
 					+ " directories for " + aUri.spec);
 		
 		return aUri;
     },
 	
     get canRefresh() {
-		Components.utils.reportError("tb: canRefresh() called");
 		// I *guess* it makes sense to refresh this calender, as its entries are
 		// only modified by an external application (=the thunderbird adressbook)
 		// until now.
@@ -184,14 +177,12 @@ calThunderBirthDay.prototype = {
     },
 	
     addObserver: function cTBD_addObserver(aObserver) {
- 		Components.utils.reportError("tb: addObserver() called");
        if (this.mObservers.indexOf(aObserver) == -1) {
             this.mObservers.push(aObserver);
         }
     },
 	
     removeObserver: function cTBD_removeObserver(aObserver) {
-		Components.utils.reportError("tb: removeObserver() called");
         function cTBD_removeObserver_remove(obj) {
             return ( obj != aObserver );
         }
@@ -203,7 +194,7 @@ calThunderBirthDay.prototype = {
 	 * as thunderbirthday can't write to the adressbook yet.
 	 */
     adoptItem: function cTBD_adoptItem(aItem, aListener) {
-		Components.utils.reportError("tb: adoptItem() called");
+		LOG(2,"TBD: adoptItem() called");
         
 		try {
 			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
@@ -221,7 +212,7 @@ calThunderBirthDay.prototype = {
     },
 	
     addItem: function cTBD_addItem(aItem, aListener) {
-		Components.utils.reportError("tb: addItem() called");
+		LOG(2,"TBD: addItem() called");
         
 		try {
 			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
@@ -239,7 +230,7 @@ calThunderBirthDay.prototype = {
     },
 	
     modifyItem: function cTBD_modifyItem(aNewItem, aOldItem, aListener) {
-		Components.utils.reportError("tb: modifyItem() called");
+		LOG(2,"TBD: modifyItem() called");
         
 		try {
 			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
@@ -257,7 +248,7 @@ calThunderBirthDay.prototype = {
     },
 	
     deleteItem: function cTBD_deleteItem(aItem, aListener) {
-		Components.utils.reportError("tb: deleteItem() called");
+		LOG(2,"TBD: deleteItem() called");
         
 		try {
 			throw new Components.Exception("", Ci.calIErrors.CAL_IS_READONLY);
@@ -276,17 +267,17 @@ calThunderBirthDay.prototype = {
 	
 	//todo: implement
     getItem: function cTBD_getItem(aId, aListener) {
-		Components.utils.reportError("tb: getItem() called");
+		LOG(2,"TBD: getItem() called");
         
-		// This function needs a test case using mechanisms in bug 365212
-        LOG("Getting item with id " + aId);
-        try {
-            this.mSession.getItem(this, aId, this.getItem_response, aListener);
+		try {
+			throw new Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
         } catch (e) {
+            this.notifyObservers("onError", [e.result, e.message]);
+            
             if (aListener != null) {
                 aListener.onOperationComplete(this,
                                               e.result,
-                                              Ci.calIOperationListener.GET,
+                                              Ci.calIOperationListener.DELETE,
                                               null,
                                               e.message);
             }
@@ -299,13 +290,14 @@ calThunderBirthDay.prototype = {
                                     aRangeEnd,
                                     aListener) {
 		try {
-			Components.utils.reportError("tb: getItems() called: " + aRangeStart.toString() + "-" + aRangeEnd.toString());
+			LOG(1,"TBD: getItems() called: " + aRangeStart.toString() + "-" + aRangeEnd.toString());
 		} catch(e) {
-			Components.utils.reportError("tb: getItems() called");
-		}	
+			LOG(1,"TBD: getItems() called");
+		}
+		var itemsSent = 0;			// count items sent to the listener, so it doesn't exceed aCount
 		
         try {
-            // item base type
+            // item base type (event or todo)
             var wantEvents = ((aItemFilter &
                                Ci.calICalendar.ITEM_FILTER_TYPE_EVENT) != 0);
             var wantTodos = ((aItemFilter &
@@ -313,47 +305,50 @@ calThunderBirthDay.prototype = {
 			
             // check if events are wanted
             if (!wantEvents && !wantTodos) {
-                // Nothing to do. The onOperationComplete in the catch block
-                // below will catch this.
+                // Nothing to do. The onOperationComplete in the catch block below will catch this.
                 throw new Components.Exception("", Cr.NS_OK);
             } else if (wantTodos && !wantEvents) {
                 throw new Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
             }
 			
             // return occurrences?
-			// todo: so only return occurrences
-            var itemReturnOccurrences = ((aItemFilter &
-                Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
+			var itemReturnOccurrences = ((aItemFilter &
+						Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
 			
-            //-----
-			
+            
 			// iterate through directories
 			for (var i = 0; i < this.mDirectories.length; i++) {
-				var abDir = this.mDirectories[i];
 				
-				// with (abDir.directoryProperties) Components.utils.reportError ("ab: " + dirType + fileName + URI);
+				var abCardsEnum = this.mDirectories[i].childCards.
+							QueryInterface(Components.interfaces.nsIEnumerator);
 				
-				var abCardsEnum = abDir.childCards.QueryInterface(Components.interfaces.nsIEnumerator);
 				try {
 					// initialize abCardsEnum (nsIEnumerator stinks)
 					abCardsEnum.first();
 					
 					// iterate through cards
 					do {
-						var abCard = abCardsEnum.currentItem().QueryInterface(Components.interfaces.nsIAbCard);
+						var abCard = abCardsEnum.currentItem().
+									QueryInterface(Components.interfaces.nsIAbCard);
 						
 						var baseItem = cTBD_convertAbCardToEvent(abCard);
-						
 						if (!baseItem) continue;	// card couldn't be converted to an event
 						
 						baseItem.calendar = this;
 						baseItem.makeImmutable();
 						
-						var items = cTBD_getOccurencesAsEvents(baseItem,aRangeStart,aRangeEnd);
+						
+						// collect occurrences or base item depending on the filter
+						if (itemReturnOccurrences) {
+							var items = cTBD_getOccurencesAsEvents(baseItem, aRangeStart, aRangeEnd);
+						} else {
+							var items = [baseItem];
+						}
+						
 						
 						// report occurrences of this card
 						if (items.length > 0) {
-							Components.utils.reportError("getItems: returning " + items.length
+							LOG(2,"TBD: getItems: returning " + items.length
 										+ " item for " + abCard.displayName);
 							
 							aListener.onGetResult(this,
@@ -364,21 +359,17 @@ calThunderBirthDay.prototype = {
 												  items);
 						}
 						
-						// abCardsEnum.next() will (hopefully) throw an exception when
+						// abCardsEnum.next() always evaluates as false and will throw an exception when
 						// arrived at the end of the list (nsIEnumerator stinks)
-					} while(abCardsEnum.next() || true)
+					} while(abCardsEnum.next() || (aCount == 0 || itemsSent < aCount))
 				}
-				// these are exceptions thrown by the nsIEnumerator interface and well known
+				// these are exceptions thrown by the nsIEnumerator interface and well known.
 				// apperently the interface can't be used in a clean way... :-/
 				catch (e if e.name == "NS_ERROR_FAILURE" || e.name == "NS_ERROR_INVALID_POINTER") {
-					// nsIEnumerator stinks!!!
-					// Components.utils.reportError("getItems: exception: nsIEnumerator stinks!!!");
-				} catch (e) {
-					Components.utils.reportError("getItems: exception: " + e);
+					LOG(0,"TBD: getItems: exception: nsIEnumerator stinks!!!");
 				}
 			}
 			
-			Components.utils.reportError("getItems: sending done message");
 			
 			// Operation completed successfully.
 			if (aListener != null) {
@@ -388,9 +379,16 @@ calThunderBirthDay.prototype = {
 											  null,
 											  null);
 			}
-        } catch (e) {
-			Components.utils.reportError("getItems: exception: " + e.message + ", filter: " + aItemFilter);
-            
+        }
+		
+		// Something went wrong, so notify observers
+		catch (e) {
+			if (e.name == "NS_OK" || e.name == "NS_ERROR_NOT_IMPLEMENTED") {
+				LOG(2,"TBD: getItems: known exception, filter: " + aItemFilter);
+            } else {
+				LOG(5,"TBD: getItems: exception: " + e);
+			}
+			
 			if (aListener != null) {
                 aListener.onOperationComplete(this,
                                               e.result,
@@ -401,20 +399,20 @@ calThunderBirthDay.prototype = {
     },
 	
     refresh: function cTBD_refresh() {
-		Components.utils.reportError("tb: refresh() called");
+		LOG(1,"TBD: refresh() called");
 		this.notifyObservers("onLoad", [this]);
 	},
 	
 	/*
-	 * Todo: Don't know what that's for...
+	 * Batch mode is not implemented. I don't know, whether we even need this...
 	 */
     startBatch: function cTBD_startBatch() {
-		Components.utils.reportError("tb: startBatch() called");
+		LOG(1,"TBD: startBatch() called");
         this.notifyObservers("onStartBatch", []);
     },
 	
     endBatch: function cTBD_endBatch() {
-		Components.utils.reportError("tb: endBatch() called");
+		LOG(1,"TBD: endBatch() called");
         this.notifyObservers("onEndBatch", []);
     },
 
@@ -429,8 +427,7 @@ calThunderBirthDay.prototype = {
 	    * @param aArgs        An array of arguments that is passed to the observer
 	    */
     notifyObservers: function cTBD_notifyObservers(aEvent, aArgs) {
- 		Components.utils.reportError("tb: notifyObservers() called");
-        for each (var obs in this.mObservers) {
+ 		for each (var obs in this.mObservers) {
             try {
                 obs[aEvent].apply(obs, aArgs);
             } catch (e) {
@@ -531,7 +528,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	// this is also false when year, month or day is not set or NaN
 	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
-		Components.utils.reportError("convert: datum " + year + "-" + month + "-" + day + " nicht valide");
+		LOG(2,"TBD: convert: datum " + year + "-" + month + "-" + day + " nicht valide");
 		return null;
 	}
 	
@@ -543,8 +540,9 @@ function cTBD_convertAbCardToEvent(abCard) {
 	event.startDate.day = day;
 	event.startDate.isDate = true;
 	event.startDate.normalize();
-	// Components.utils.reportError("convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
-				// + "-" + abCard.birthDay + " wird zu " + event.startDate.toString());
+	
+	LOG(1,"TBD: convert: datum " + abCard.birthYear + "-" + abCard.birthMonth 
+				+ "-" + abCard.birthDay + " wird zu " + event.startDate.toString());
 	
 	event.endDate = event.startDate.clone();
 	event.endDate.day += 1;							// all-day events end 1 day after they began
@@ -563,6 +561,8 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	// as the actual birthday, this event is the start of the recurrence
 	event.recurrenceStartDate = event.startDate.clone();
+	// todo: not sure what recurrenceId does...
+	event.recurrenceId = event.startDate.clone();
 	
 	
 	// additional info
@@ -598,8 +598,9 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 	
 	// get occurences
 	var recurrenceItems = aEvent.recurrenceInfo.getRecurrenceItems({});
-	var occurrences = recurrenceItems[0].getOccurrences(aEvent.startDate,allDayRangeStart,aRangeEnd,-1,{});
-															// I *suppose* that -1 means no limit   ^^
+	var occurrences = recurrenceItems[0].getOccurrences(aEvent.startDate,
+														allDayRangeStart,
+														aRangeEnd,-1,{});	// I *suppose* that -1 means no limit
 	
 	// create events
 	var events = [];
@@ -608,17 +609,17 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 		// todo: use createProxy()
 		var newItem = aEvent.clone();
 		
-		// todo: id
-		// todo: title (display age)
 		with (newItem) {
+			// todo: id
 			id = Math.round(Math.random() * 1000);
 			
 			startDate = occurrences[i].clone();
 			endDate = occurrences[i].clone();
 			endDate.day += 1;
 			
-			// todo: not sure what recurrenceId does...
-			recurrenceId = aEvent.startDate.clone();
+			// append age to the title
+			var age = startDate.year - aEvent.startDate.year;
+			title += " (" + age + ")";
 			
 			recurrenceInfo = aEvent.recurrenceInfo;
 			parentItem = aEvent;
@@ -629,4 +630,21 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 	}
 	
 	return events;
+}
+
+
+/**
+ * LOG
+ * Logs the message aMessage to the error console if aDebugLevel is higher than a certain
+ * number, that can be set according to ones suites. As a convention, debug levels can be
+ * integers from 0 (tottaly unimportant) to 5 (very important).
+ *
+ *
+ * @param aDebugLevel  Minimum debug level where the message should be shown.
+ * @param aMessage  Message to be logged.
+ */
+function LOG(aDebugLevel, aMessage) {
+	if (aDebugLevel >= 0) {
+		Components.utils.reportError(aMessage);
+	}
 }

@@ -1,3 +1,47 @@
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Thunderbirthday Provider code.
+ *
+ * The Initial Developer of the Original Code is
+ *	Ingo Mueller (thunderbirthday at ingomueller dot net)
+ * Portions created by the Initial Developer are Copyright (C) 2007
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+/**
+ * Load locales
+ */
+var sbs = Components.classes["@mozilla.org/intl/stringbundle;1"]
+			.getService(Components.interfaces.nsIStringBundleService);
+var locale = sbs.createBundle("chrome://thunderbirthday/locale/calendarCreation.properties");
+
+
 /**
  * Modifies the calendarCreation dialog to the suits of ThunderBirthDays
  */
@@ -16,9 +60,6 @@ function cTBD_loadCalendarCreation() {
 	
 	// Fill Dropdownbox with adressbooks
 	cTBD_fillDropDownBox();
-	
-	// debug
-	test();
 }
 
 
@@ -35,7 +76,7 @@ function cTBD_fillDropDownBox() {
 	
 	// "All adressbooks" item
 	var menuitem = document.createElement("menuitem");
-	menuitem.setAttribute('label',"Alle Adressbuecher");
+	menuitem.setAttribute('label',locale.GetStringFromName("menuAllAddressbooks"));
 	menuitem.setAttribute('value',"moz-abdirectory://");
 	
 	listbox.appendChild(menuitem);
@@ -101,7 +142,7 @@ function cTBD_initName() {
 				|| nameField.value)
         return;
 
-    nameField.value = "Geburtstage des Thunderbird-Adressbuchs";
+    nameField.value = locale.GetStringFromName("calendarNameProposition");
 }
 
 /**
@@ -127,42 +168,4 @@ function makeURL(aUriString) {
     var ioSvc = Cc["@mozilla.org/network/io-service;1"].
                 getService(Ci.nsIIOService);
     return ioSvc.newURI(aUriString, null, null);
-}
-
-function test() {
-	return;
-	
-	var abRdf = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
-	var abRootDir = abRdf.GetResource("moz-abdirectory://").QueryInterface(Components.interfaces.nsIAbDirectory);
-	
-	with (abRootDir.directoryProperties) alert (abRootDir.dirName + dirType + fileName + URI);
-	
-	var abSubDirs = abRootDir.childNodes.QueryInterface(Components.interfaces.nsISimpleEnumerator);
-	// var abSubDirs = abRootDir.QueryInterface(Components.interfaces.nsISimpleEnumerator);
-	
-	while (abSubDirs.hasMoreElements()) {
-		var abDir = abSubDirs.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
-		
-		// alert (abDir.dirName);
-		// with (abDir.directoryProperties) alert (dirType + fileName + URI);
-		
-		// alert(abDir.childCards);
-		
-		var abCardsEnum = abDir.childCards.QueryInterface(Components.interfaces.nsIEnumerator);
-		try {
-			abCardsEnum.first();
-			do {
-				var abCard = abCardsEnum.currentItem().QueryInterface(Components.interfaces.nsIAbCard);
-				
-				with (abCard) alert("ab: "
-							+ getCardValue("BirthYear")
-							+ getCardValue("BirthMonth") 
-							+ getCardValue("BirthDay"));
-				
-				// abCardsEnum.next();
-			} while(abCardsEnum.next())
-		} catch (e) {
-			alert(e.message);
-		}
-	}
 }

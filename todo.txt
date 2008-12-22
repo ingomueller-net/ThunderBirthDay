@@ -1,0 +1,13 @@
+* calIItemBase.id
+	- At the moment, it's a random number between 0 and 1000.
+	- What is it for?
+	- How can we find a certain addressbook card with a given ID?
+		--> implementation of calThunderBirthDay.getItem()
+* calIItemBase.recurrenceId
+	- What is it for?
+	- What's the difference to calIItemBase.recurrenceStartDate?
+* calIItemBase.createProxy
+	- Not sure whether we should use this instead of clonig the parentItem...
+	- Is cTBD_getOccurencesAsEvents the correct way to return occurrences?
+* I'm sure there's a lot more. Anyway, if you read this and have any
+  ideas, suggestions, critics or whatsoever, please let me know!
