@@ -283,15 +283,14 @@ calThunderBirthDay.prototype = {
             } else if (wantTodos && !wantEvents) {
                 throw new Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
             }
+			
             // return occurrences?
             var itemReturnOccurrences = ((aItemFilter &
                 Ci.calICalendar.ITEM_FILTER_CLASS_OCCURRENCES) != 0);
 			
-            var extradata = { itemfilter: aItemFilter, listener: aListener };
-			
             //-----
 			
-			var abDirectoryEnum = this.abDirectoryEnum;
+			var abDirectoryEnum = this.getAbDirectoryEnum();
 			
 			while (abDirectoryEnum.hasMoreElements()) {
 				var abDir = abDirectoryEnum.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
@@ -299,87 +298,21 @@ calThunderBirthDay.prototype = {
 				// Components.utils.reportError ("ab: " + abDir.dirName);
 				// with (abDir.directoryProperties) Components.utils.reportError ("ab: " + dirType + fileName + URI);
 				
-				// nsIEnumerator stinks!!!
 				var abCardsEnum = abDir.childCards.QueryInterface(Components.interfaces.nsIEnumerator);
 				try {
-					// initialize abCardsEnum
+					// initialize abCardsEnum (nsIEnumerator stinks)
 					abCardsEnum.first();
 					
 					do {
 						var abCard = abCardsEnum.currentItem().QueryInterface(Components.interfaces.nsIAbCard);
 						
-						var baseItem = Cc["@mozilla.org/calendar/event;1"].
-									createInstance(Ci.calIEvent);
-						
-						baseItem.id = Math.round(Math.random() * 1000);
-						baseItem.title = abCard.displayName + "s Geburtstag";
-						
-						baseItem.startDate = createDateTime();
-						with (baseItem.startDate) {
-			                year = parseInt(abCard.birthYear);
-							month = parseInt(abCard.birthMonth) - 1;
-							day = parseInt(abCard.birthDay);
-							isDate = true;
-							normalize();
-			            }
-						
-						baseItem.endDate = createDateTime();
-						with (baseItem.endDate) {
-			                year = parseInt(abCard.birthYear);
-							month = parseInt(abCard.birthMonth) - 1;
-							day = parseInt(abCard.birthDay) + 1;
-							isDate = true;
-							normalize();
-			            }
-						
+						var baseItem = cTBD_convertAbCardToEvent(abCard);
 						baseItem.calendar = this;
-						
-						
-						// recurrence info erstellen ---------------------------
-						var recurrenceInfo = createRecurrenceInfo();
-						recurrenceInfo.item = baseItem;
-						
-						var recRule = createRecurrenceRule();
-						recRule.type = "YEARLY";
-						recRule.interval = 1;
-						recRule.count = -1;
-						
-						recurrenceInfo.insertRecurrenceItemAt(recRule, 0);
-						
-						
-						baseItem.recurrenceInfo = recurrenceInfo;
 						baseItem.makeImmutable();
 						
-						// occurences im geforderten intervall holen ---------------------------------
-						var recs = recurrenceInfo.getRecurrenceItems({});
+						var items = cTBD_getOccurencesAsEvents(baseItem,aRangeStart,aRangeEnd);
 						
-						var aCount = {};
-						var occs = recs[0].getOccurrences(baseItem.startDate,aRangeStart,aRangeEnd,5,aCount);
-						
-						Components.utils.reportError("getItems: occs: " + aCount.value + ":" + occs);
-						
-						
-						// daraus events erzeugen
-						var items = [];
-						
-						for (var i = 0; i < occs.length; i++) {
-							var newItem = baseItem.clone();
-							newItem.id = Math.round(Math.random() * 1000);
-							
-							newItem.startDate = occs[i].clone();
-							newItem.endDate = occs[i].clone();
-							newItem.endDate.day += 1;
-							
-							newItem.recurrenceInfo = recurrenceInfo;
-							newItem.parentItem = baseItem;
-							newItem.makeImmutable();
-							
-							items.push(newItem);
-						}
-						
-						Components.utils.reportError("getItems: items: " + items.length);
-						
-						
+						Components.utils.reportError("getItems: returning items: " + items.length);
 						
 						aListener.onGetResult(this,
 											  Cr.NS_OK,
@@ -388,9 +321,10 @@ calThunderBirthDay.prototype = {
 											  items.length,
 											  items);
 						
-						// abCardsEnum.next() will throw an exception when arrived at the end of the list
+						// abCardsEnum.next() will throw an exception when arrived at the end of the list (nsIEnumerator stinks)
 					} while(abCardsEnum.next() || true)
 				} catch (e) {
+					// nsIEnumerator stinks!!!
 					Components.utils.reportError("getItems: exception: " + e.message + e.stack);
 				}
 			}
@@ -431,7 +365,7 @@ calThunderBirthDay.prototype = {
 /*
 * Stuff
 */
-	get abDirectoryEnum() {
+	getAbDirectoryEnum: function cTBD_getAbDirectoryEnum() {
 		// Components.utils.reportError("tb: get abDirectoryEnum() called");
 		
 		var abRdf = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
@@ -496,3 +430,102 @@ function createRecurrenceInfo() {
     return Cc["@mozilla.org/calendar/recurrence-info;1"].
            createInstance(Ci.calIRecurrenceInfo);
 }
+
+/**
+* cTBD_convertAbCardToEvent
+* Converts an nsIAbCard into an calIEvent of the birthday with infinite yearly recurrence
+*
+ * @param abCard  nsIAbCard interface of an adressbook card
+ *
+ * @returns  calIEvent of the birhtday, not immutable and with no calender property set
+ */
+function cTBD_convertAbCardToEvent(abCard) {
+	Components.utils.reportError("convert: called");
+	
+	var event = createEvent();
+	
+	// todo: id, title
+	event.id = Math.round(Math.random() * 1000);
+	event.title = abCard.displayName + "s Geburtstag";
+	
+	
+	// set start and end date
+	event.startDate = createDateTime();
+	with (event.startDate) {
+		year = parseInt(abCard.birthYear);
+		month = parseInt(abCard.birthMonth) - 1;		// month is zero-based
+		day = parseInt(abCard.birthDay);
+		isDate = true;
+		normalize();
+	}
+	
+	event.endDate = event.startDate.clone();
+	event.endDate.day += 1;								// all-day events end 1 day after the began
+	
+	
+	// set recurrence information
+	event.recurrenceInfo = createRecurrenceInfo();
+	event.recurrenceInfo.item = event;
+	
+	var recRule = createRecurrenceRule();
+		recRule.type = "YEARLY";
+		recRule.interval = 1;
+		recRule.count = -1;
+	
+	event.recurrenceInfo.insertRecurrenceItemAt(recRule, 0);
+	
+	
+	Components.utils.reportError("convert: returning event");
+	
+	return event;
+}
+
+/**
+ * cTBD_getOccurences
+ * Returns all occurences of an event in a certain range as items
+ *
+ * @param aEvent  calIEvent to get the occurrences from
+ * @param aRangeStart  calIDateTime indicating the start of the range for the occurrences,
+ *				"flooring" to the beginning of the day of aRangeStart
+ * @param aRangeEnd  calIDateTime indicating the end of the range for the occurrences
+ *
+ * @returns calIEvent() which are occurrences of aEvent in the given range
+ */
+function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
+	// we probably also want birthdays "that already started"
+	// that day, so we let the range start on the beginning of that day
+	var allDayRangeStart = aRangeStart.clone();
+	allDayRangeStart.isDate = true;
+	
+	
+	// get occurences
+	var recurrenceItems = aEvent.recurrenceInfo.getRecurrenceItems({});
+	var occurrences = recurrenceItems[0].getOccurrences(aEvent.startDate,allDayRangeStart,aRangeEnd,-1,{});
+															// I *suppose* that -1 means no limit   ^^
+	
+	// create events
+	var events = [];
+	
+	for (var i = 0; i < occurrences.length; i++) {
+		var newItem = aEvent.clone();
+		
+		// todo: id
+		// todo: title (display age)
+		newItem.id = Math.round(Math.random() * 1000);
+		
+		newItem.startDate = occurrences[i].clone();
+		newItem.endDate = occurrences[i].clone();
+		newItem.endDate.day += 1;
+		
+		newItem.recurrenceInfo = aEvent.recurrenceInfo;
+		newItem.parentItem = aEvent;
+		newItem.makeImmutable();
+		
+		events.push(newItem);
+	}
+	
+	return events;
+}
+	
+	
+	
