@@ -41,7 +41,7 @@
     
     <Description about="urn:mozilla:install-manifest">
         <em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-        <em:version>0.2.4</em:version>
+        <em:version>0.2.5</em:version>
         <em:type>2</em:type>
         
         <em:name>ThunderBirthDay</em:name>
@@ -49,6 +49,7 @@
         <em:creator>Ingo Müller</em:creator>
         <em:homepageURL>https://addons.mozilla.org/en-US/thunderbird/addon/5337</em:homepageURL>
         
+        <em:translator>agnetao (sv-SE)</em:translator>
         <em:translator>Ahmed (ar)</em:translator>
         <em:translator>Alf (nl-NL)</em:translator>
         <em:translator>chichot (cs-CZ)</em:translator>
@@ -77,7 +78,7 @@
                 <!-- Lightning -->
                 <em:id>{e2fda1a4-762b-4020-b5ad-a41df1933103}</em:id>
                 <em:minVersion>0.5</em:minVersion>
-                <em:maxVersion>0.8pre</em:maxVersion>
+                <em:maxVersion>0.8</em:maxVersion>
             </Description>
         </em:requires>
     </Description>      

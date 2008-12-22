@@ -7,6 +7,7 @@ A huge thanks to all contributors of this extensions!
 Philipp Kewisch -- The author of the google calendar provider, which
 				   served as skeleton for ThunderBirthDay
 Michael Kurz -- For the active testing and the support in bug smashing!
+edvoldi -- A very eager tester from www.sunbird-kalender.de/forum/
 Babelzilla and the translators there -- See datails in install.rdf
 
 And many other testers...
@@ -71,6 +72,9 @@ And many other testers...
 
 * Let the user set all kind of things, globally and per calendar:
   (1) the format of the events title, (2) category, ...
+
+* A wish from a user: Possibility to have birthdays without the year
+  being set. Not sure about how to implement this...
   
 +-----------------------------------+
 |    Resources for developers       |

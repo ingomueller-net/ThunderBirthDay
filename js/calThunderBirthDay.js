@@ -918,6 +918,10 @@ calThunderBirthDay.prototype = {
         event.startDate.day = day;
         event.startDate.isDate = true;
         
+        // This is an allday event, so set its timezone to floating.
+        // The floating function is new in Lighning 0.8
+        if (typeof floating == "function") event.startDate.timezone = floating();
+        
         // normalize is needed in lightning 0.5, but has been removed in lightning 0.7
         if (event.startDate.normalize) event.startDate.normalize();
         event.startDate.makeImmutable();
