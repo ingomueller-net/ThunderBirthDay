@@ -36,17 +36,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-
 /**
- * calGoogleCalendar
- * This Implements a calICalendar Object adapted to the Google Calendar
+ * calThunderBirthDay
+ * This Implements a calICalendar object adapted to the Thunderbirthday
  * Provider.
  *
- * @class
- * @constructor
+ * Note: I copied this part from the Google Calendar Provider without
+ * understanding it 100%. It just works for the moment...
  */
 function calThunderBirthDay() {
 	Components.utils.reportError("tb: calThunderBirthDay() called");
@@ -80,8 +76,7 @@ function calThunderBirthDay() {
 }
 
 calThunderBirthDay.prototype = {
-
-    QueryInterface: function cTBD_QueryInterface(aIID) {
+	QueryInterface: function cTBD_QueryInterface(aIID) {
 		// Components.utils.reportError("tb: calThunderBirthDay.prototype.QueryInterface() called");
         if (!aIID.equals(Ci.nsISupports) &&
             !aIID.equals(Ci.calICalendar)) {
@@ -96,24 +91,23 @@ calThunderBirthDay.prototype = {
     mID: null,
     mObservers: null,
     mUri: null,
-    mAdressbooks: null,
-	mItem: null,
-
+    mDirectories: null,
+	
 /*
- * implement calICalendar
+ * Implement calICalendar
  */
     get id() {
 		// Components.utils.reportError("tb: get id() called: " + this.mID);
         return this.mID;
     },
-
+	
     set id(id) {
 		// Components.utils.reportError("tb: set id() called: " + id);
         if (this.mID)
             throw Cr.NS_ERROR_ALREADY_INITIALIZED;
         return (this.mID = id);
     },
-
+	
     get readOnly() {
 		// Components.utils.reportError("tb: get readOnly() called");
         return true;
@@ -124,41 +118,78 @@ calThunderBirthDay.prototype = {
         // todo: return this.mReadOnly = v;
 		return true;
     },
-
+	
     get type() {
 		Components.utils.reportError("tb: get type() called");
         return "thunderbirthday";
     },
-
+	
     get sendItipInvitations() {
 		Components.utils.reportError("tb: sendItipInvitations() called");
         return false;
     },
-
+	
     get uri() {
 		// Components.utils.reportError("tb: get uri() called: " + this.mUri.spec);
         return this.mUri;
     },
 	
+	/**
+	 * When (re)setting the adressbooks uri, we collect all the directories
+	 * stored at that uri. This is only one adressbook if the uri is of the form
+	 * "moz-abmdbdirectory://abook.mab" and all directories of the if the
+	 * uri is of the form "moz-abdirectory://".
+	 */
     set uri(aUri) {
 		// Components.utils.reportError("tb: set uri() called: " + aUri.spec);
 		
         this.mUri = aUri;
+		
+		// reset mDirectories
+		this.mDirectories = [];
+		
+		var abRdf = getRDFService();
+		
+		// "All adressbooks" has been chosen
+		if (this.mUri.spec == "moz-abdirectory://") {
+			var abRootDir = abRdf.GetResource("moz-abdirectory://")
+								.QueryInterface(Components.interfaces.nsIAbDirectory);
+			
+			var abDirectoryEnum = abRootDir.childNodes
+								.QueryInterface(Components.interfaces.nsISimpleEnumerator);
+			
+			while (abDirectoryEnum.hasMoreElements()) {
+				var abDir = abDirectoryEnum.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
+				this.mDirectories.push(abDir);
+			}
+		}
+		// One specific adressbook
+		else {
+			var abDir = abRdf.GetResource(this.mUri.spec).QueryInterface(Components.interfaces.nsIAbDirectory);
+			this.mDirectories.push(abDir);
+		}
+		
+		Components.utils.reportError("uri: stored " + this.mDirectories.length 
+					+ " directories for " + aUri.spec);
+		
 		return aUri;
     },
-
+	
     get canRefresh() {
 		Components.utils.reportError("tb: canRefresh() called");
-        return false;
+		// I *guess* it makes sense to refresh this calender, as its entries are
+		// only modified by an external application (=the thunderbird adressbook)
+		// until now.
+        return true;
     },
-
+	
     addObserver: function cTBD_addObserver(aObserver) {
  		Components.utils.reportError("tb: addObserver() called");
        if (this.mObservers.indexOf(aObserver) == -1) {
             this.mObservers.push(aObserver);
         }
     },
-
+	
     removeObserver: function cTBD_removeObserver(aObserver) {
 		Components.utils.reportError("tb: removeObserver() called");
         function cTBD_removeObserver_remove(obj) {
@@ -166,7 +197,11 @@ calThunderBirthDay.prototype = {
         }
         this.mObservers = this.mObservers.filter(cTBD_removeObserver_remove);
     },
-
+	
+	/*
+	 * The following functions only consist of throwing CAL_IS_READONLY exceptions
+	 * as thunderbirthday can't write to the adressbook yet.
+	 */
     adoptItem: function cTBD_adoptItem(aItem, aListener) {
 		Components.utils.reportError("tb: adoptItem() called");
         
@@ -184,7 +219,7 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
+	
     addItem: function cTBD_addItem(aItem, aListener) {
 		Components.utils.reportError("tb: addItem() called");
         
@@ -202,7 +237,7 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
+	
     modifyItem: function cTBD_modifyItem(aNewItem, aOldItem, aListener) {
 		Components.utils.reportError("tb: modifyItem() called");
         
@@ -220,7 +255,7 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
+	
     deleteItem: function cTBD_deleteItem(aItem, aListener) {
 		Components.utils.reportError("tb: deleteItem() called");
         
@@ -238,7 +273,8 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
+	
+	//todo: implement
     getItem: function cTBD_getItem(aId, aListener) {
 		Components.utils.reportError("tb: getItem() called");
         
@@ -256,7 +292,7 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
+	
     getItems: function cTBD_getItems(aItemFilter,
                                     aCount,
                                     aRangeStart,
@@ -290,11 +326,9 @@ calThunderBirthDay.prototype = {
 			
             //-----
 			
-			var abDirectoryEnum = this.getAbDirectoryEnum();
-			
 			// iterate through directories
-			while (abDirectoryEnum.hasMoreElements()) {
-				var abDir = abDirectoryEnum.getNext().QueryInterface(Components.interfaces.nsIAbDirectory);
+			for (var i = 0; i < this.mDirectories.length; i++) {
+				var abDir = this.mDirectories[i];
 				
 				// with (abDir.directoryProperties) Components.utils.reportError ("ab: " + dirType + fileName + URI);
 				
@@ -334,13 +368,7 @@ calThunderBirthDay.prototype = {
 					// nsIEnumerator stinks!!!
 					// Components.utils.reportError("getItems: exception: nsIEnumerator stinks!!!");
 				} catch (e) {
-					Components.utils.reportError("getItems: exception: "
-								+ ", name: " + e.name 
-								+ ", message: " + e.message 
-								+ ", stack: " + e.stack 
-								+ ", result: " + e.result 
-								+ ", data: " + e.data 
-								+ ", inner: " + e.inner);
+					Components.utils.reportError("getItems: exception: " + e);
 				}
 			}
 			
@@ -365,39 +393,28 @@ calThunderBirthDay.prototype = {
             }
         }
     },
-
-    refresh: function cTBD_refresh() { },
-
+	
+    refresh: function cTBD_refresh() {
+		Components.utils.reportError("tb: refresh() called");
+		this.notifyObservers("onLoad", [this]);
+	},
+	
+	/*
+	 * Todo: Don't know what that's for...
+	 */
     startBatch: function cTBD_startBatch() {
 		Components.utils.reportError("tb: startBatch() called");
         this.notifyObservers("onStartBatch", []);
     },
-
+	
     endBatch: function cTBD_endBatch() {
 		Components.utils.reportError("tb: endBatch() called");
         this.notifyObservers("onEndBatch", []);
     },
 
 /*
-* Stuff
+* Helpers
 */
-	getAbDirectoryEnum: function cTBD_getAbDirectoryEnum() {
-		// Components.utils.reportError("tb: get abDirectoryEnum() called");
-		
-		var abRdf = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
-		
-		// "All adressbooks" has been chosen
-		if (this.mUri.spec == "moz-abdirectory://") {
-			var abRootDir = abRdf.GetResource("moz-abdirectory://").QueryInterface(Components.interfaces.nsIAbDirectory);
-			
-			return abRootDir.childNodes.QueryInterface(Components.interfaces.nsISimpleEnumerator);
-		}
-		// One specific adressbook
-		else {
-			return abRdf.GetResource(this.mUri).QueryInterface(Components.interfaces.nsIAbDirectory);
-		}
-    },
-	
 	/**
 	    * notifyObservers
 	    * Notify this calendar's observers that a specific event has happened
@@ -417,6 +434,14 @@ calThunderBirthDay.prototype = {
     }
 };
 
+
+/*
+ * Helpers for Interfaces
+ */
+
+const Cc = Components.classes;
+const Ci = Components.interfaces;
+const Cr = Components.results;
 
 /* Returns a clean new calIEvent */
 function createEvent() {
@@ -446,6 +471,17 @@ function createRecurrenceInfo() {
     return Cc["@mozilla.org/calendar/recurrence-info;1"].
            createInstance(Ci.calIRecurrenceInfo);
 }
+
+/* Shortcut to the RDF service */
+function getRDFService() {
+	return Cc["@mozilla.org/rdf/rdf-service;1"].
+		   getService(Components.interfaces.nsIRDFService);
+}
+
+
+/*
+ * Functions for dealing with cards and events
+ */
 
 /**
 * cTBD_convertAbCardToEvent
@@ -534,8 +570,8 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 			endDate = occurrences[i].clone();
 			endDate.day += 1;
 			
-			// todo: not sure what recurrenceId dose...
-			recurrenceId = startDate.clone();
+			// todo: not sure what recurrenceId does...
+			recurrenceId = aEvent.startDate.clone();
 			
 			recurrenceInfo = aEvent.recurrenceInfo;
 			parentItem = aEvent;

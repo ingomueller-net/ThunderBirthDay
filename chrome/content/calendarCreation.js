@@ -130,7 +130,7 @@ function makeURL(aUriString) {
 }
 
 function test() {
-	// return;
+	return;
 	
 	var abRdf = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
 	var abRootDir = abRdf.GetResource("moz-abdirectory://").QueryInterface(Components.interfaces.nsIAbDirectory);
