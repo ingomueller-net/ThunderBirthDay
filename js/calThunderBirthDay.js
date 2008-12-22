@@ -685,9 +685,9 @@ function cTBD_convertAbCardToEvent(abCard) {
 	}
 	
 	//search for valid date
-	var year = parseInt(abCard.birthYear);
-	var month = parseInt(abCard.birthMonth) - 1;	// month is zero-based
-	var day = parseInt(abCard.birthDay);
+	var year = parseInt(abCard.birthYear,10);
+	var month = parseInt(abCard.birthMonth,10) - 1;	// month is zero-based
+	var day = parseInt(abCard.birthDay,10);
 	
 	// this is also false when year, month or day is not set or NaN
 	if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 && day >= 1 && day <= 31)) {
