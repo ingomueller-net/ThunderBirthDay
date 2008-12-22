@@ -1,21 +1,22 @@
 <?xml version="1.0"?>
-<overlay id="sample" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<overlay id="cTBD_calendarCreation" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<wizard id="calendar-wizard" onload="cTBD_loadCalendarCreation();">
 		<script type="application/x-javascript" src="chrome://thunderbirthday/content/calendarCreation.js"/>
 		
 		<wizardpage pageid="cTBD_locationPageLocal"
 	               next="customizePage"
 	               label="Einen neuen Kalender erstellen"
-				   onpageshow="cBD_checkRequiredLocal();"
+				   onpageshow="cTBD_checkRequiredLocal();"
 	               description="Ort Ihres Kalenders feststellen">
 	        <description>Bitte waehlen Sie den Typ Ihres Kalenders aus</description>
-			<radiogroup id="cTBD-calendar-format" onselect="cTBD_onChangeFormatSelection();">
+			<radiogroup id="cTBD-calendar-format" onselect="cTBD_onChangeFormatSelection();" onchange="cTBD_checkRequiredLocal();">
 				<radio value="default" label="Sunbird-Kalender (Standard)" selected="true"/>
 				<radio value="thunderbirthday" label="Geburtstage aus Thunderbird-Adressbuch"/>
 			</radiogroup>
-			<label id="cTBD-abook-lbl" value="Pfad zum Adressbuch (abook.mab):" hidden="true"/>
-			<textbox id="cTBD-abook-uri" hidden="true" oninput="cBD_checkRequiredLocal();" />
-			<!-- todo: http://developer.mozilla.org/en/docs/nsIFilePicker -->
+			<menulist id="cTBD-abook-uri" label="Addressbuch auswaehlen:" hidden="true">
+				<menupopup id="cTBD-abook-uri-popup" oncommand="cTBD_checkRequiredLocal();">
+				</menupopup>
+			</menulist>
 	   </wizardpage>
    </wizard>
 	
