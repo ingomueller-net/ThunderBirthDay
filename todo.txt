@@ -1,5 +1,8 @@
 * calIItemBase.id
-	- At the moment, it's a random number between 0 and 1000.
+	- At the beginning, it was random number between 0 and 1000.
+	  Now, it's an random md5 hash for the base event and the same
+	  hash followed by "-" and the age at the time of the occurence
+	  for reccurrences of this event. Is that a good idea?
 	- What is it for? How long is one ID assossiated with its
 	  event? Does this assossiation end with the termination of
 	  Thunderbird or does one event have to have the same ID every

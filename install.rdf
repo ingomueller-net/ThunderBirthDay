@@ -41,8 +41,12 @@
 	
 	<Description about="urn:mozilla:install-manifest">
 		<em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-		<em:version>0.1.8a</em:version>
+		<em:version>0.1.9a</em:version>
 		<em:type>2</em:type>
+		
+		<em:name>ThunderBirthDay</em:name>
+		<em:description>Display birthdays from the thunderbird addressbooks as events in lightning.</em:description>
+		<em:creator>Ingo Müller</em:creator>
 		
 		<em:targetApplication>
 			<Description>
@@ -61,10 +65,5 @@
 				<em:maxVersion>0.5</em:maxVersion>
 			</Description>
 		</em:requires>
-		
-		<em:name>ThunderBirthDay</em:name>
-		<em:description>Display birthdays from the thunderbird addressbooks as events in lightning.</em:description>
-		<em:creator>Ingo Müller</em:creator>
-		
 	</Description>      
 </RDF>

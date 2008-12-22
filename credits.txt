@@ -1,0 +1,11 @@
+A huge thanks to all contributors of this extensions!
+
+Philipp Kewisch -- The author of the google calendar provider, which served as skeleton for ThunderBirthDay
+Michael Kurz -- For the active testing and the support in bug smashing!
+myahoo (and others) -- fr-FR translator(s)
+Pedro -- it-IT translator
+drry -- ja-JP translator
+teo -- pl-PL translator
+lloco - pt-PT translator
+
+And many other testers...

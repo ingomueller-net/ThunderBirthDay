@@ -295,7 +295,7 @@ calThunderBirthDay.prototype = {
 			
 			
 			// iterate through cards in this.mBaseItems
-			for (var i, ii = rangeIndices.startIndex; ii < rangeIndices.endIndex
+			for (var i, ii = rangeIndices.startIndex; ii <= rangeIndices.endIndex
 							&& (aCount == 0 || itemsSent < aCount); ii++) {
 				
 				// if there is a "carry-over", ii may be greater than this.mBaseItems.length,
@@ -481,6 +481,8 @@ calThunderBirthDay.prototype = {
 					baseItem.calendar = this;
 					baseItem.makeImmutable();
 					
+					LOG(2,"TBD: loaded event for " + baseItem.title);
+					
 					
 					this.mBaseItems.push(baseItem);
 					itemsLoaded++;
@@ -517,7 +519,7 @@ calThunderBirthDay.prototype = {
 	/**
 	    * calculateRangeIndices
 	    * Calculates the index in this.mBaseItems of the first element in the range (startIndex)
-	    * and the index of the first element after the range (endIndex). That way, elements with index
+	    * and the index of the last element in the range (endIndex). That way, elements with index
 	    * between these values are in the range. Note that this.mBaseItems is sorted by yearday.
 	    *
 	    * Note that aResult.endIndex may be greater than this.mBaseElements.length, if aRangeEnd
@@ -542,11 +544,9 @@ calThunderBirthDay.prototype = {
 			
 			// if it doesn't make sense, just "mark" the whole base items array
 			aResult.startIndex = 0;
-			aResult.endIndex = this.mBaseItems.length;
+			aResult.endIndex = this.mBaseItems.length - 1;
 			
 		} else {		// range is less than a year
-			aResult.startIndex;		// index of the first element in the range
-			aResult.endIndex;		// index of the first element after the range
 			
 			// binary search the first element in the range
 			var lower = 0;
@@ -603,6 +603,7 @@ calThunderBirthDay.prototype = {
 		}
 		
 		var endTime = new Date();
+		LOG(1,"TBD: calculateRangeIndices run in " + (endTime - startTime) + "ms.");
 		
 		// debug:
 		// var log = "TBD: pivot: result found in " + (endTime - startTime) + " ms: \n";
@@ -681,8 +682,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	
 	var event = createEvent();
 	
-	// todo: id
-	event.id = Math.round(Math.random() * 1000);
+	event.id = md5(Math.random());
 	
 	
 	// remark:the base items title only consist of the name. Occurrences titles
@@ -702,6 +702,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 			break;
 		}
 	}
+	
 	
 	//search for valid date
 	var year = parseInt(abCard.birthYear,10);
@@ -760,6 +761,7 @@ function cTBD_convertAbCardToEvent(abCard) {
 	return event;
 }
 
+
 /**
     * cTBD_getOccurences
     * Returns all occurences of an event in a certain range as items
@@ -771,7 +773,7 @@ function cTBD_convertAbCardToEvent(abCard) {
     *
     * @returns calIEvent() which are occurrences of aEvent in the given range
     */
-function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
+function cTBD_getOccurencesAsEvents(aEvent, aRangeStart, aRangeEnd) {
 	// we probably also want birthdays "that already started"
 	// that day, so we let the range start on the beginning of that day
 	var allDayRangeStart = aRangeStart.clone();
@@ -792,9 +794,6 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 		var newItem = aEvent.clone();
 		
 		with (newItem) {
-			// todo: id
-			id = Math.round(Math.random() * 1000);
-			
 			startDate = occurrences[i].clone();
 			startDate.makeImmutable();
 			
@@ -807,12 +806,18 @@ function cTBD_getOccurencesAsEvents(aEvent,aRangeStart,aRangeEnd) {
 			var age = startDate.year - aEvent.startDate.year;
 			title += " (" + age + ")";
 			
+			// id is md5 hash of base item + age
+			id = aEvent.id + "-" + age;
+			
 			recurrenceInfo = aEvent.recurrenceInfo;
 			parentItem = aEvent;
 			makeImmutable();
 			
 			events.push(newItem);
 		}
+		
+		LOG(0,"TBD: created occurence with id " + newItem.id +
+					" belonging to base event with id " + aEvent.id);
 	}
 	
 	return events;
@@ -860,4 +865,39 @@ function LOG(aDebugLevel, aMessage) {
 			Components.utils.reportError(aMessage);
 		}
 	}
+}
+
+
+/**
+    * md5
+    * Computes the md5 hash of a string.
+    *
+    * Copied from http://developer.mozilla.org/en/docs/nsICryptoHash
+    *
+    * @param aString  String the md5 hash should be computed for
+    *
+    * @returns  Md5 hash of aString as string in hexadecimal format
+    */
+function md5(aString) {
+	// convert string to byte array
+	var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
+	    createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+
+	converter.charset = "UTF-8";
+	
+	var data = converter.convertToByteArray(aString, {});
+	var ch = Cc["@mozilla.org/security/hash;1"]
+	                   .createInstance(Components.interfaces.nsICryptoHash);
+	
+	// calculate hash
+	ch.init(ch.MD5);
+	ch.update(data, data.length);
+	var hash = ch.finish(false);
+
+	// convert the binary hash data to a hex string.
+	var s = "";
+	for(i=0; i<hash.length; i++)
+		s += hash.charCodeAt(i).toString(16);
+	
+	return s; 
 }
