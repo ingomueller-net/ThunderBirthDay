@@ -1,2 +1,2 @@
-content sample jar:chrome/sample.jar!/chrome/content/
-overlay chrome://calendar/content/calendarCreation.xul chrome://sample/content/calendarCreation.xul
+content thunderbirthday chrome/content/
+overlay chrome://calendar/content/calendarCreation.xul chrome://thunderbirthday/content/calendarCreation.xul
