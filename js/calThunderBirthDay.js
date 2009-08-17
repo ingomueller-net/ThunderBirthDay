@@ -127,7 +127,7 @@ calThunderBirthDay.prototype = {
         this.mUri = aUri;
         
         // the uri of the directories changed, so we need to refresh everything
-//        this.refresh();
+        this.refresh();
         
         return aUri;
     },
@@ -522,42 +522,40 @@ calThunderBirthDay.prototype = {
         // Iterate through directories
         for (var i = 0; i < this.mDirectories.length; i++) {
             try {
-                // TODO: what if abook doesn't exist
                 // Get card iterator, fails if file doesn't exist
                 var abCardsEnum = this.mDirectories[i].childCards
                                       .QueryInterface(Components.interfaces
                                                                 .nsISimpleEnumerator);
-                // Load all cards from the directory
-                while (abCardsEnum.hasMoreElements()) {
-                    abCard = abCardsEnum.getNext()
-                                        .QueryInterface(Components.interfaces
-                                                                  .nsIAbCard);
-
-                    var baseItem = this.convertAbCardToEvent(abCard);
-                    if (!baseItem) continue;  // card couldn't be converted to an event
-                    
-                    MyLOG(3,"TBD: loaded event for " + baseItem.title + " (" +
-                            baseItem.id + ")");
-                    
-                    
-                    this.mBaseItems.push(baseItem);
-                    itemsLoaded++;
-                }
-            } catch (e if e.name == "NS_ERROR_FILE_NOT_FOUND") {
-                MyLOG(0, "TBD: Address book could not be loaded. File not found: " +
-                      this.mUri.spec);
+            } catch (e) {
+                MyLOG(0,"TBD: Address book could not be loaded. " +
+                        "Maybe the file was not found: " + this.mUri.spec + "\n" + e);
                 
                 // Remove non-existing directory
                 this.mDirectories.splice(i--, 1);
                 
                 // Deactivate calendar if no directories left
                 if (this.mDirectories.length == 0) {
-                    MyLOG(1, "TBD: Deactivating calendar at " + this.mUri.spec + ".");
+                    MyLOG(1,"TBD: Deactivating calendar at " + this.mUri.spec + ".");
                     this.setProperty("disabled", true);
                 }
                 continue;
-            } catch (e) {
-                MyLOG(0, "TBD: Address book could not be loaded:" + e );
+            }
+
+            // Load all cards from the directory
+            while (abCardsEnum.hasMoreElements()) {
+                abCard = abCardsEnum.getNext()
+                                    .QueryInterface(Components.interfaces
+                                                              .nsIAbCard);
+
+                var baseItem = this.convertAbCardToEvent(abCard);
+                if (!baseItem) continue;  // card couldn't be converted to an event
+                
+                MyLOG(3,"TBD: loaded event for " + baseItem.title + " (" +
+                        baseItem.id + ")");
+                
+                
+                this.mBaseItems.push(baseItem);
+                itemsLoaded++;
             }
         }
         
