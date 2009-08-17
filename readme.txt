@@ -40,6 +40,10 @@ And many other testers...
 |     Possible new features         |
 +-----------------------------------+
 
+This list is not up-to-date. Please have a look at
+http://ingomueller.net/mozilla/thunderbirthday/wishlist for a more detailed and
+up-to-date version of this list.
+
 * The description on AMO has to be improved: it has to be clear to the user
   that ThunderBirthDay provides a new type of calendar and that it doesn't
   just export events.
@@ -84,7 +88,7 @@ And many other testers...
 * http://ingomueller.net/mozilla/thunderbirthday -- The projects home page
 * http://rfc.net/rfc2445.html -- RFC2445 - Internet Calendaring and
   Scheduling Core Object Specification (iCalendar)
-* http://lxr.mozilla.org/ -- Source code of Thunderbird and Lighting
-* http://lxr.mozilla.org/mozilla/source/calendar/base/public/calICalendar.idl --
+* http://mxr.mozilla.org/ -- Source code of Thunderbird and Lighting
+* http://mxr.mozilla.org/mozilla/source/calendar/base/public/calICalendar.idl --
   Specification of the calICalendar interface - the main interface TBD is
   implementing.

@@ -69,37 +69,12 @@ calThunderBirthDay.prototype = {
     
 /*
  * Implement calICalendar
- * (Lightning 0.5-0.7 only)
- */
-    get suppressAlarms() {
-        // For the moment, ThunderBirthDay doesn't support alarms
-        return true;
-    },
-    
-    set suppressAlarms(v) {
-        // For the moment, ThunderBirthDay doesn't support alarms
-        // so don't accept changes here
-        return true;
-    },
-    
-/*
- * Implement calICalendar
- * (Lightning 0.5-0.8 only)
- */
-    get sendItipInvitations() {
-        // We don't "handle invitations internally"...
-        return true;
-    },
-    
-/*
- * Implement calICalendar
- * (Lightning 0.8+ only)
  *
  * The following code is heavily inspired by the google calendaer provider.
  * See http://mxr.mozilla.org/mozilla1.8/source/calendar/providers/gdata/
  */
-    getProperty: function cGC_getProperty(aName) {
-        MyLOG(2, "TBD: getProperty: " + aName);
+    getProperty: function cTBD_getProperty(aName) {
+        MyLOG(4, "TBD: getProperty: " + aName);
         
         switch (aName) {
             // Limitations due to being read-only
@@ -138,10 +113,6 @@ calThunderBirthDay.prototype = {
         return this.__proto__.__proto__.setProperty.apply(this, arguments);
     },
 
-/*
- * Implement calICalendar
- * (all versions of Lightning)
- */
     get type() {
         return "thunderbirthday";
     },
@@ -156,7 +127,7 @@ calThunderBirthDay.prototype = {
         this.mUri = aUri;
         
         // the uri of the directories changed, so we need to refresh everything
-        this.refresh();
+//        this.refresh();
         
         return aUri;
     },
@@ -508,38 +479,31 @@ calThunderBirthDay.prototype = {
         // reset mDirectories
         this.mDirectories = [];
         
-        var abRdf = getRDFService();
-        
         // "All adressbooks" has been chosen
         if (this.mUri.spec == "moz-abdirectory://") {
-            var abRootDir = abRdf.GetResource("moz-abdirectory://")
-                                 .QueryInterface(Components.interfaces.nsIAbDirectory);
+            var abDirs = getAbManager().directories
+                                       .QueryInterface(Components.interfaces
+                                                                 .nsISimpleEnumerator);
             
-            // todo: this command is responsible for 240ms of the 320ms loading time!
-            var abDirectoryEnum = abRootDir.childNodes
-                                .QueryInterface(Components.interfaces
-                                                          .nsISimpleEnumerator);
-            
-            while (abDirectoryEnum.hasMoreElements()) {
-                var abDir = abDirectoryEnum.getNext()
-                                    .QueryInterface(Components.interfaces
-                                                              .nsIAbDirectory);
+            while (abDirs.hasMoreElements()) {
+                var abDir = abDirs.getNext()
+                                  .QueryInterface(Components.interfaces
+                                                            .nsIAbDirectory);
                 this.mDirectories.push(abDir);
             }
         }
         // One specific adressbook
         else {
-            var abDir = abRdf.GetResource(this.mUri.spec)
-                                    .QueryInterface(Components.interfaces
-                                                              .nsIAbDirectory);
+            var abDir = getAbManager().getDirectory(this.mUri.spec)
+                                      .QueryInterface(Components.interfaces
+                                                                .nsIAbDirectory);
             this.mDirectories.push(abDir);
         }
         
         var endTime = new Date();
         
         MyLOG(2,"TBD: loaded " + this.mDirectories.length + " directories for "
-              + this.mUri.spec +
-                    " in " + (endTime - startTime) + " ms.");
+              + this.mUri.spec + " in " + (endTime - startTime) + " ms.");
     },
     
     /**
@@ -554,14 +518,31 @@ calThunderBirthDay.prototype = {
         
         var itemsLoaded = 0;
         this.mBaseItems = [];
-        
-        // iterate through directories
+
+        // Iterate through directories
         for (var i = 0; i < this.mDirectories.length; i++) {
-            // Get card iterator, fails if file doesn't exist
             try {
+                // TODO: what if abook doesn't exist
+                // Get card iterator, fails if file doesn't exist
                 var abCardsEnum = this.mDirectories[i].childCards
-                                    .QueryInterface(Components.interfaces
-                                                                .nsIEnumerator);
+                                      .QueryInterface(Components.interfaces
+                                                                .nsISimpleEnumerator);
+                // Load all cards from the directory
+                while (abCardsEnum.hasMoreElements()) {
+                    abCard = abCardsEnum.getNext()
+                                        .QueryInterface(Components.interfaces
+                                                                  .nsIAbCard);
+
+                    var baseItem = this.convertAbCardToEvent(abCard);
+                    if (!baseItem) continue;  // card couldn't be converted to an event
+                    
+                    MyLOG(3,"TBD: loaded event for " + baseItem.title + " (" +
+                            baseItem.id + ")");
+                    
+                    
+                    this.mBaseItems.push(baseItem);
+                    itemsLoaded++;
+                }
             } catch (e if e.name == "NS_ERROR_FILE_NOT_FOUND") {
                 MyLOG(0, "TBD: Address book could not be loaded. File not found: " +
                       this.mUri.spec);
@@ -575,38 +556,8 @@ calThunderBirthDay.prototype = {
                     this.setProperty("disabled", true);
                 }
                 continue;
-            }
-            
-            try {
-                // initialize abCardsEnum (nsIEnumerator stinks)
-                abCardsEnum.first();
-                
-                // iterate through cards
-                do {
-                    var abCard = abCardsEnum.currentItem()
-                                            .QueryInterface(Components.interfaces
-                                                                      .nsIAbCard);
-                    
-                    var baseItem = this.convertAbCardToEvent(abCard);
-                    if (!baseItem) continue;  // card couldn't be converted to an event
-                    
-                    MyLOG(4,"TBD: loaded event for " + baseItem.title + " ("
-                          + baseItem.id + ")");
-                    
-                    
-                    this.mBaseItems.push(baseItem);
-                    itemsLoaded++;
-                    
-                    // abCardsEnum.next() always evaluates as false and will
-                    // throw an exception when arrived at the end of the list
-                    // (nsIEnumerator stinks)
-                } while(abCardsEnum.next() || true)
-            }
-            // these are exceptions thrown by the nsIEnumerator interface and well known.
-            // apperently the interface can't be used in a clean way... :-/
-            catch (e if e.name == "NS_ERROR_FAILURE" ||
-                   e.name == "NS_ERROR_INVALID_POINTER") {
-                MyLOG(5,"TBD: loadBaseItems: exception: nsIEnumerator stinks!!!");
+            } catch (e) {
+                MyLOG(0, "TBD: Address book could not be loaded:" + e );
             }
         }
         
@@ -781,9 +732,9 @@ calThunderBirthDay.prototype = {
         
         
         // Search for valid date.
-        var year = parseInt(abCard.birthYear,10);
-        var month = parseInt(abCard.birthMonth,10) - 1;   // month is zero-based
-        var day = parseInt(abCard.birthDay,10);
+        var year = parseInt(abCard.getProperty("BirthYear", null),10);
+        var month = parseInt(abCard.getProperty("BirthMonth", null),10) - 1;   // month is zero-based
+        var day = parseInt(abCard.getProperty("BirthDay", null),10);
         
         // This is also false when year, month or day is not set or NaN.
         if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 &&
@@ -802,22 +753,16 @@ calThunderBirthDay.prototype = {
         event.startDate.isDate = true;
         
         // This is an allday event, so set its timezone to floating.
-        // The floating function is new in Lighning 0.8
-        if (typeof floating == "function") event.startDate.timezone = floating();
-        
-        // normalize is needed in lightning 0.5, but has been removed in lightning 0.7
-        if (event.startDate.normalize) event.startDate.normalize();
+        event.startDate.timezone = floating();
         event.startDate.makeImmutable();
         
-        MyLOG(5,"TBD: convert: date " + abCard.birthYear + "-" + abCard.birthMonth 
-                    + "-" + abCard.birthDay + " has been converted to "
-                    + event.startDate.toString());
+        MyLOG(5,"TBD: convert: date " + abCard.getProperty("BirthYear",null) +
+                "-" + abCard.getProperty("BirthMonth",null) + "-" +
+                abCard.getProperty("BirthDay",null) + " has been converted to " +
+                event.startDate.toString());
         
         event.endDate = event.startDate.clone();
         event.endDate.day += 1;         // all-day events end 1 day after they began
-        
-        // normalize is needed in lightning 0.5, but has been removed in lightning 0.7
-        if (event.endDate.normalize) event.endDate.normalize();
         event.endDate.makeImmutable();
         
         
@@ -826,15 +771,16 @@ calThunderBirthDay.prototype = {
         // and such
         
         // choose best field of the abCard for the title (one of these fields
-        // (except nickname) has to be set for every card
-        with (abCard) var possibleTitles = [displayName,
-                                            nickName,
-                                            (firstName && lastName ? firstName
-                                             + " " + lastName : null),
-                                            firstName,
-                                            lastName,
-                                            primaryEmail,
-                                            company]
+        // (except nickname) has to be set for every card)
+        with (abCard) var possibleTitles = [getProperty("DisplayName", null),
+                                            getProperty("NickName", null),
+                                            ( getProperty("FirstName", null) && getProperty("LastName", null) ?
+                                              getProperty("FirstName", null) + " " + getProperty("LastName", null) :
+                                              null ),
+                                            getProperty("FirstName", null),
+                                            getProperty("LastName", null),
+                                            getProperty("PrimaryEmail", null),
+                                            getProperty("Company", null)]
         for (var i = 0; i < possibleTitles.length; i++) {
             if (possibleTitles[i]) {
                 event.title = possibleTitles[i];
@@ -858,8 +804,8 @@ calThunderBirthDay.prototype = {
         
         
         // additional info
-        if(abCard.webPage2)       // webPage2 is home web page
-            event.setProperty("URL", abCard.webPage2);
+        if(abCard.getProperty("WebPage2",null))       // webPage2 is home web page
+            event.setProperty("URL", abCard.getProperty("WebPage2",null));
         
         event.privacy = "PRIVATE";
         
@@ -874,7 +820,7 @@ calThunderBirthDay.prototype = {
         
         // set "LAST-MODIFIED" at the end, since it get changed when s.th. else is set
         var lastMod = createDateTime();
-        lastMod.nativeTime = abCard.lastModifiedDate * 1000 * 1000;
+        lastMod.nativeTime = abCard.getProperty("LastModifiedDate",0) * 1000 * 1000;
         lastMod.makeImmutable();
         event.setProperty("LAST-MODIFIED", lastMod);
         
@@ -890,10 +836,10 @@ calThunderBirthDay.prototype = {
  * Helpers for Interfaces
  */
 
-/* Shortcut to the RDF service */
-function getRDFService() {
-    return Components.classes["@mozilla.org/rdf/rdf-service;1"]
-           .getService(Components.interfaces.nsIRDFService);
+/* Shortcut to the abManager service */
+function getAbManager() {
+    return Components.classes["@mozilla.org/abmanager;1"]
+                     .getService(Components.interfaces.nsIAbManager);
 }
 
 

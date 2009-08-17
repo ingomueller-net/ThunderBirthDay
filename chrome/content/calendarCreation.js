@@ -73,14 +73,6 @@ function cTBD_loadCalendarCreation() {
  * of the adresbooks
  */
 function cTBD_fillDropDownBox() {
-    var abRdf = Components.classes["@mozilla.org/rdf/rdf-service;1"]
-                          .getService(Components.interfaces.nsIRDFService);
-    var abRootDir = abRdf.GetResource("moz-abdirectory://")
-                         .QueryInterface(Components.interfaces.nsIAbDirectory);
-    
-    var abSubDirs = abRootDir.childNodes
-                             .QueryInterface(Components.interfaces.nsISimpleEnumerator);
-    
     var listbox = document.getElementsByAttribute("id", "cTBD-abook-uri-popup")[0];
     
     // "All adressbooks" item
@@ -90,14 +82,22 @@ function cTBD_fillDropDownBox() {
     
     listbox.appendChild(menuitem);
     
+    // Get addressbook enumerator
+    var abManager = Components.classes["@mozilla.org/abmanager;1"]
+                              .getService(Components.interfaces.nsIAbManager);
+    var abDirs = abManager.directories
+                          .QueryInterface(Components.interfaces
+                                                    .nsISimpleEnumerator);
+
     // List of adressbooks
-    while (abSubDirs.hasMoreElements()) {
-        var abDir = abSubDirs.getNext()
-                             .QueryInterface(Components.interfaces.nsIAbDirectory);
+    while (abDirs.hasMoreElements()) {
+        var abDir = abDirs.getNext()
+                          .QueryInterface(Components.interfaces
+                                                    .nsIAbDirectory);
         
         var menuitem = document.createElement("menuitem");
         menuitem.setAttribute("label",abDir.dirName);
-        menuitem.setAttribute("value",abDir.directoryProperties.URI);
+        menuitem.setAttribute("value",abDir.URI);
         
         listbox.appendChild(menuitem);
     }

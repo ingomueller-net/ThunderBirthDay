@@ -35,6 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+// TODO: get rid of this file
 /*
  * This file is copied from Lightning 0.9pre. To work with older versions
  * of Lightning, the following helpers are necessary. The rest of the code
@@ -160,6 +161,17 @@ calProviderBase.prototype = {
         this.mID = aValue;
 
 //         ASSERT(this.mProperties.toSource() == "({})", "setProperty calls before id has been set!");
+        var calMgr = getCalendarManager();
+
+        // make all properties persistent that have been set so far:
+        for (let aName in this.mProperties) {
+            if (!calProviderBase.mTransientProperties[aName]) {
+                let aValue = this.mProperties[aName];
+                if (aValue !== null) {
+                    calMgr.setCalendarPref_(this, aName, aValue);
+                }
+            }
+        }
 
         // xxx todo: move this code hack when migrating storage prefs to moz prefs,
         //           presumably with bug 378754
