@@ -47,7 +47,7 @@ function calThunderBirthDay() {
 
 calThunderBirthDay.prototype = {
     // Inherit from calProviderBase for the the nice helpers
-    __proto__: calProviderBase.prototype,
+    __proto__: cal.ProviderBase.prototype,
     
 /*
  * Implement nsISupports

@@ -72,7 +72,7 @@ var calThunderBirthDayModule = {
         if (this.mUtilsLoaded)
             return;
 
-        const scripts = ["calProviderBase.js","calThunderBirthDay.js"];
+        const scripts = ["calThunderBirthDay.js"];
 
         var loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
                                .getService(Components.interfaces.mozIJSSubScriptLoader);
@@ -85,6 +85,14 @@ var calThunderBirthDayModule = {
             loader.loadSubScript("chrome://calendar/content/calUtils.js", null);
         } catch (e) {
             Components.utils.reportError("Error while loading calUtils.js\n");
+            throw e;
+        }
+
+        // Load Calendar's calProviderUtils.jsm
+        try {
+            Components.utils.import("resource://calendar/modules/calProviderUtils.jsm");
+        } catch (e) {
+            Components.utils.reportError("Error while loading calProviderUtils.jsm\n");
             throw e;
         }
         
