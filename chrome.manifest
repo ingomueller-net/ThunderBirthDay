@@ -19,4 +19,6 @@ locale thunderbirthday pt-PT chrome/locale/pt-PT/
 locale thunderbirthday ru-RU chrome/locale/ru-RU/
 locale thunderbirthday sk-SK chrome/locale/sk-SK/
 locale thunderbirthday sv-SE chrome/locale/sv-SE/
+locale thunderbirthday tr-TR chrome/locale/tr-TR/
+locale thunderbirthday uk-UA chrome/locale/uk-UA/
 locale thunderbirthday zh-CN chrome/locale/zh-CN/
