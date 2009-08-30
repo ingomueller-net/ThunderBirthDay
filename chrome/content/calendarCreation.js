@@ -169,7 +169,7 @@ function cTBD_checkRequiredLocal() {
 /** cTBD_onLocalPageAdvanced
  * Modifies the form accordingly to the input of the user, i.e. sets
  * the calendar format to "thunderbirthday" and the uri to the address
- * book uri, if a TBD calendar is to be created. Also in Lightning 0.8,
+ * book uri, if a TBD calendar is to be created. Also
  * prepareCreateCalendar is called.
  */
 function cTBD_onLocalPageAdvanced() {
@@ -180,10 +180,11 @@ function cTBD_onLocalPageAdvanced() {
                     document.getElementsByAttribute("id", "cTBD-abook-uri")[0].value;
         document.getElementById("calendar-type").selectedItem.value = "remote";
         document.getElementById("calendar-format").selectedItem.value = "thunderbirthday";
+    } else {
+        document.getElementById("calendar-type").selectedItem.value = "local";
     }
     
-    // Since Lightning 0.8, this has to be called before the customizePage
-    if (typeof prepareCreateCalendar == "function") return prepareCreateCalendar();
+    return prepareCreateCalendar();
 }
 
 
