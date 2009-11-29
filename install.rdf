@@ -41,7 +41,7 @@
     
     <Description about="urn:mozilla:install-manifest">
         <em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-        <em:version>0.3.2</em:version>
+        <em:version>0.3.3</em:version>
         <em:type>2</em:type>
         
         <em:name>ThunderBirthDay</em:name>
@@ -87,8 +87,8 @@
             <Description>
                 <!-- Lightning -->
                 <em:id>{e2fda1a4-762b-4020-b5ad-a41df1933103}</em:id>
-                <em:minVersion>1.0pre</em:minVersion>
-                <em:maxVersion>1.0</em:maxVersion>
+                <em:minVersion>1.0a1pre</em:minVersion>
+                <em:maxVersion>1.0.*</em:maxVersion>
             </Description>
         </em:requires>
     </Description>
