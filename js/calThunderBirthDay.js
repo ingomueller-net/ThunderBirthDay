@@ -36,6 +36,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+/**
+ * Import utils
+ * Only used with Gecko 2 / Thunderbird 5 and Lightning 1.0b4
+ * TODO: Drop this comment when Thunderbird 3 support is dropped.
+ */
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://calendar/modules/calUtils.jsm");
 
@@ -54,6 +59,8 @@ calThunderBirthDay.prototype = {
     
 /*
  * Properties required for XPCOM registration
+ * Only used with Gecko 2 / Thunderbird 5
+ * TODO: Drop this comment when Thunderbird 3 support is dropped.
  */
     classDescription: "ThunderBirthDay Provider",
     contractID: "@mozilla.org/calendar/calendar;1?type=thunderbirthday",
@@ -736,7 +743,7 @@ calThunderBirthDay.prototype = {
      */
     convertAbCardToEvent: function cTBD_convertAbCardToEvent(abCard) {
         
-        var event = createEvent();
+        var event = cal.createEvent();
         
         
         // Search for valid date.
@@ -754,14 +761,14 @@ calThunderBirthDay.prototype = {
         
         
         // Set start and end date.
-        event.startDate = createDateTime();
+        event.startDate = cal.createDateTime();
         event.startDate.year = year;
         event.startDate.month = month;
         event.startDate.day = day;
         event.startDate.isDate = true;
         
         // This is an allday event, so set its timezone to floating.
-        event.startDate.timezone = floating();
+        event.startDate.timezone = cal.floating();
         event.startDate.makeImmutable();
         
         MyLOG(5,"TBD: convert: date " + abCard.getProperty("BirthYear",null) +
@@ -798,10 +805,10 @@ calThunderBirthDay.prototype = {
         
         
         // set recurrence information
-        event.recurrenceInfo = createRecurrenceInfo();
+        event.recurrenceInfo = cal.createRecurrenceInfo();
         event.recurrenceInfo.item = event;
         
-        var recRule = createRecurrenceRule();
+        var recRule = cal.createRecurrenceRule();
             recRule.type = "YEARLY";
             recRule.interval = 1;
             recRule.count = -1;
@@ -827,7 +834,7 @@ calThunderBirthDay.prototype = {
         
         
         // set "LAST-MODIFIED" at the end, since it get changed when s.th. else is set
-        var lastMod = createDateTime();
+        var lastMod = cal.createDateTime();
         lastMod.nativeTime = abCard.getProperty("LastModifiedDate",0) * 1000 * 1000;
         lastMod.makeImmutable();
         event.setProperty("LAST-MODIFIED", lastMod);
@@ -996,6 +1003,8 @@ function md5(aString) {
 
 
 /**
- * Module Registration
+ * Module Registration for Gecko 2 (Thunderbird 5)
+ * TODO: Drop the condition when Thunderbird 3 support is dropped.
  */
-var NSGetFactory = XPCOMUtils.generateNSGetFactory([calThunderBirthDay]);
+if (XPCOMUtils.generateNSGetFactory)
+    var NSGetFactory = XPCOMUtils.generateNSGetFactory([calThunderBirthDay]);

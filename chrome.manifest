@@ -1,6 +1,6 @@
 content thunderbirthday chrome/content/
 overlay chrome://calendar/content/calendarCreation.xul chrome://thunderbirthday/content/calendarCreation.xul
-component {B99A6D64-2C89-11DC-9698-529656D89593} components/calThunderBirthDay.js
+component {B99A6D64-2C89-11DC-9698-529656D89593} js/calThunderBirthDay.js
 contract @mozilla.org/calendar/calendar;1?type=thunderbirthday {B99A6D64-2C89-11DC-9698-529656D89593}
 locale thunderbirthday ar chrome/locale/ar/
 locale thunderbirthday ca-AD chrome/locale/ca-AD/
