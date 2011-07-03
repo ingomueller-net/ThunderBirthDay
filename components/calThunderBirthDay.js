@@ -36,6 +36,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://calendar/modules/calUtils.jsm");
+
 /**
  * calThunderBirthDay
  * This implements the calICalendar interface adapted to the ThunderBirthDay
@@ -49,6 +52,13 @@ calThunderBirthDay.prototype = {
     // Inherit from calProviderBase for the the nice helpers
     __proto__: cal.ProviderBase.prototype,
     
+/*
+ * Properties required for XPCOM registration
+ */
+    classDescription: "ThunderBirthDay Provider",
+    contractID: "@mozilla.org/calendar/calendar;1?type=thunderbirthday",
+    classID:  Components.ID("{B99A6D64-2C89-11DC-9698-529656D89593}"),
+
 /*
  * Implement nsISupports
  */
@@ -983,3 +993,15 @@ function md5(aString) {
     
     return s; 
 }
+
+
+/**
+ * Module Registration
+ *
+ * XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4, SeaMonkey 2.1).
+ * XPCOMUtils.generateNSGetModule was introduced in Mozilla 1.9 (Firefox 3.0).
+ */
+if (XPCOMUtils.generateNSGetFactory)
+    var NSGetFactory = XPCOMUtils.generateNSGetFactory([calThunderBirthDay]);
+else
+    var NSGetModule = XPCOMUtils.generateNSGetModule([calThunderBirthDay]);
