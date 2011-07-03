@@ -997,11 +997,5 @@ function md5(aString) {
 
 /**
  * Module Registration
- *
- * XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4, SeaMonkey 2.1).
- * XPCOMUtils.generateNSGetModule was introduced in Mozilla 1.9 (Firefox 3.0).
  */
-if (XPCOMUtils.generateNSGetFactory)
-    var NSGetFactory = XPCOMUtils.generateNSGetFactory([calThunderBirthDay]);
-else
-    var NSGetModule = XPCOMUtils.generateNSGetModule([calThunderBirthDay]);
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([calThunderBirthDay]);
