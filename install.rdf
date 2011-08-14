@@ -41,7 +41,7 @@
     
     <Description about="urn:mozilla:install-manifest">
         <em:id>{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}</em:id>
-        <em:version>0.5.0</em:version>
+        <em:version>0.6.0</em:version>
         <em:type>2</em:type>
         
         <em:name>ThunderBirthDay</em:name>
@@ -79,7 +79,13 @@
                 <!-- Thunderbird -->
                 <em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
                 <em:minVersion>3.0</em:minVersion>
-                <em:maxVersion>5.*</em:maxVersion>
+                <em:maxVersion>6.*</em:maxVersion>
+            </Description>
+            <Description>
+                <!-- SeaMonkey -->
+                <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+                <em:minVersion>2.0</em:minVersion>
+                <em:maxVersion>2.*</em:maxVersion>
             </Description>
         </em:targetApplication>
         
