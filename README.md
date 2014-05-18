@@ -1,44 +1,50 @@
-+-----------------------------------+
-|            Credits                |
-+-----------------------------------+
+# About
+
+This is an add-on for Mozilla Thunderbird that displays birthdays from the
+addressbooks as events in Lightning.
+
+
+# Installation
+
+Go to https://addons.mozilla.org/thunderbird/addon/thunderbirthday/ and follow
+the installation instructions there.
+
+
+# Credits
 
 A huge thanks to all contributors of this extensions!
 
-Philipp Kewisch -- The author of the google calendar provider, which
-				   served as skeleton for ThunderBirthDay
-Michael Kurz -- For the active testing and the support in bug smashing!
-edvoldi -- A very eager tester from www.sunbird-kalender.de/forum/
-Babelzilla and the translators there -- See datails in install.rdf
-www.icondrawer.com -- For making the duty free icon used for this extension
+* Philipp Kewisch -- The author of the google calendar provider, which
+  served as skeleton for ThunderBirthDay
+* Michael Kurz -- For the active testing and the support in bug smashing!
+* edvoldi -- A very eager tester from www.sunbird-kalender.de/forum/
+* Babelzilla and the translators there -- See datails in install.rdf
+* www.icondrawer.com -- For making the duty free icon used for this extension
 
 And many other testers...
 
 
-+-----------------------------------+
-|         Known issues              |
-+-----------------------------------+
+# Known issues
 
 * calIItemBase.id
-	- The ID is not unique yet. Until now, it is an MD5 hash of the Name,
-	  the birthday and the calendar's URI. This makes it pretty unique, but
-	  not entirely unique. One idea is to generate a random MD5 hash and
-	  save it in a new field with the nsIAddrDatabase interface.
+    - The ID is not unique yet. Until now, it is an MD5 hash of the Name,
+      the birthday and the calendar's URI. This makes it pretty unique, but
+      not entirely unique. One idea is to generate a random MD5 hash and
+      save it in a new field with the nsIAddrDatabase interface.
 
 * calICalendar.getItems()
-	- Until now, the occurrences of a recurring item as returned by the
-	  TBD data provider do not have the same title as the base item. Users
-	  retrieving occurences with the calIItemBase.getOccurrencesBetween()
-	  will get occurrences with the same title as the base item (no age in
-	  parenthesis). Maybe implementing the calIItemBase interface is a
-	  solution...
+    - Until now, the occurrences of a recurring item as returned by the
+      TBD data provider do not have the same title as the base item. Users
+      retrieving occurences with the calIItemBase.getOccurrencesBetween()
+      will get occurrences with the same title as the base item (no age in
+      parenthesis). Maybe implementing the calIItemBase interface is a
+      solution...
 
 * Anyway, if you read this and have any ideas, suggestions, critics or
   whatsoever, please let me know!
 
 
-+-----------------------------------+
-|     Possible new features         |
-+-----------------------------------+
+# Possible new features
 
 This list is not up-to-date. Please have a look at
 http://ingomueller.net/mozilla/thunderbirthday/wishlist for a more detailed and
@@ -80,10 +86,9 @@ up-to-date version of this list.
 
 * A wish from a user: Possibility to have birthdays without the year
   being set. Not sure about how to implement this...
-  
-+-----------------------------------+
-|    Resources for developers       |
-+-----------------------------------+
+
+
+# Resources for developers
 
 * http://ingomueller.net/mozilla/thunderbirthday -- The projects home page
 * http://rfc.net/rfc2445.html -- RFC2445 - Internet Calendaring and
@@ -92,3 +97,4 @@ up-to-date version of this list.
 * http://mxr.mozilla.org/mozilla/source/calendar/base/public/calICalendar.idl --
   Specification of the calICalendar interface - the main interface TBD is
   implementing.
+
