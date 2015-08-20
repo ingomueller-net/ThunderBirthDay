@@ -45,8 +45,11 @@
 ]>
 
 <overlay id="cTBD_calendarCreation" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-    <wizard id="calendar-wizard" onload="cTBD_loadCalendarCreation();">
+    <wizard id="calendar-wizard">
         <script type="application/x-javascript" src="chrome://thunderbirthday/content/calendarCreation.js"/>
+        <script type="application/javascript"><![CDATA[
+          window.addEventListener("load", cTBD_loadCalendarCreation, false);
+        ]]></script>
         
         <wizardpage pageid="cTBD_locationPageLocal"
                    next="customizePage"
