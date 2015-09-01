@@ -100,6 +100,7 @@ calThunderBirthDay.prototype = {
                 return true;
             // Capabilities
             case "requiresNetwork":
+            case "cache.supported":
             case "capabilities.attachments.supported":
             case "capabilities.priority.supported":
             case "capabilities.tasks.supported":
