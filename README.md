@@ -84,9 +84,6 @@ up-to-date version of this list.
 * Let the user set all kind of things, globally and per calendar:
   (1) the format of the events title, (2) category, ...
 
-* A wish from a user: Possibility to have birthdays without the year
-  being set. Not sure about how to implement this...
-
 
 # Resources for developers
 

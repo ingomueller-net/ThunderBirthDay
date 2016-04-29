@@ -753,7 +753,9 @@ calThunderBirthDay.prototype = {
         var day = parseInt(abCard.getProperty("BirthDay", null),10);
         
         // This is also false when year, month or day is not set or NaN.
-        if (!(year >= 0 && year < 3000 && month >= 0 && month <= 11 &&
+        // 29/04/2016 Dirk Busse: added support for birthdays without year of birth
+        //                        (Allowed NaN for the year.)
+        if (!(((year >= 0 && year < 3000) || isNaN(year)) && month >= 0 && month <= 11 &&
               day >= 1 && day <= 31)) {
             MyLOG(5,"TBD: convert: date " + year + "-" + month + "-" + day
                   + " not valid");
@@ -895,10 +897,14 @@ function cTBD_getOccurencesFromEvent(aEvent, aRangeStart, aRangeEnd) {
         occurrences[i] = occurrences[i].clone();
         
         with (occurrences[i]) {
-            // append age to the title
-            var age = startDate.year - aEvent.startDate.year;
-            title += " (" + age + ")";
-            
+            // 29/04/2016 Dirk Busse: added support for birthdays without year of birth
+            //                        (Don't add the age if year of birth is unknown.)
+            if (!isNaN(aEvent.startDate.year) && aEvent.startDate.year != 0)
+            {
+                // append age to the title
+                var age = startDate.year - aEvent.startDate.year;
+                title += " (" + age + ")";
+            }
             makeImmutable();
         }
     }
