@@ -1,3 +1,5 @@
+"use strict";
+
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -561,7 +563,7 @@ calThunderBirthDay.prototype = {
 
             // Load all cards from the directory
             while (abCardsEnum.hasMoreElements()) {
-                abCard = abCardsEnum.getNext()
+                var abCard = abCardsEnum.getNext()
                                     .QueryInterface(Components.interfaces
                                                               .nsIAbCard);
 
@@ -788,15 +790,15 @@ calThunderBirthDay.prototype = {
         
         // choose best field of the abCard for the title (one of these fields
         // (except nickname) has to be set for every card)
-        with (abCard) var possibleTitles = [getProperty("DisplayName", null),
-                                            getProperty("NickName", null),
-                                            ( getProperty("FirstName", null) && getProperty("LastName", null) ?
-                                              getProperty("FirstName", null) + " " + getProperty("LastName", null) :
-                                              null ),
-                                            getProperty("FirstName", null),
-                                            getProperty("LastName", null),
-                                            getProperty("PrimaryEmail", null),
-                                            getProperty("Company", null)]
+        var possibleTitles = [abCard.getProperty("DisplayName", null),
+                              abCard.getProperty("NickName", null),
+                              ( abCard.getProperty("FirstName", null) && abCard.getProperty("LastName", null) ?
+                                abCard.getProperty("FirstName", null) + " " + abCard.getProperty("LastName", null) :
+                                null ),
+                              abCard.getProperty("FirstName", null),
+                              abCard.getProperty("LastName", null),
+                              abCard.getProperty("PrimaryEmail", null),
+                              abCard.getProperty("Company", null)]
         for (var i = 0; i < possibleTitles.length; i++) {
             if (possibleTitles[i]) {
                 event.title = possibleTitles[i];
@@ -894,13 +896,11 @@ function cTBD_getOccurencesFromEvent(aEvent, aRangeStart, aRangeEnd) {
     for (var i = 0; i < occurrences.length; i++) {
         occurrences[i] = occurrences[i].clone();
         
-        with (occurrences[i]) {
-            // append age to the title
-            var age = startDate.year - aEvent.startDate.year;
-            title += " (" + age + ")";
-            
-            makeImmutable();
-        }
+        // append age to the title
+        var age = occurrences[i].startDate.year - aEvent.startDate.year;
+        occurrences[i].title += " (" + age + ")";
+
+        occurrences[i].makeImmutable();
     }
     
     return occurrences;
@@ -943,29 +943,29 @@ function cTBD_compareDatesInYear(aDateTime1, aDateTime2) {
  * @param aMessage      Message to be logged
  */
 function MyLOG(aPriority, aMessage) {
-    if (this.mVerbosity == null) {
+    if (MyLOG.mVerbosity == null) {
         // load verbosity from pref tree
-        this.mVerbosity = Components.classes["@mozilla.org/preferences-service;1"]
+        MyLOG.mVerbosity = Components.classes["@mozilla.org/preferences-service;1"]
                                 .getService(Components.interfaces.nsIPrefService)
                                 .getBranch("extensions.thunderbirthday.")
                                 .getIntPref("verbosity");
         
         // load console service
-        this.mConsoleService = Components.classes["@mozilla.org/consoleservice;1"]
+        MyLOG.mConsoleService = Components.classes["@mozilla.org/consoleservice;1"]
                                     .getService(Components.interfaces
                                                           .nsIConsoleService);
     }
     
-    if (aPriority <= this.mVerbosity) {
+    if (aPriority <= MyLOG.mVerbosity) {
         if (aPriority == 0) {
             Components.utils.reportError(aMessage);
         } else {
-            this.mConsoleService.logStringMessage(aMessage);
+            MyLOG.mConsoleService.logStringMessage(aMessage);
         }
     }
 }
-MyLOG.prototype.mVerbosity = null;
-MyLOG.prototype.mConsoleService = null;
+MyLOG.mVerbosity = null;
+MyLOG.mConsoleService = null;
 
 
 /**
@@ -995,7 +995,7 @@ function md5(aString) {
 
     // convert the binary hash data to a hex string.
     var s = "";
-    for(i = 0; i < hash.length; i++) {
+    for(var i = 0; i < hash.length; i++) {
         s += hash.charCodeAt(i).toString(16);
     }
     
