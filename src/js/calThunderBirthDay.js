@@ -142,6 +142,11 @@ calThunderBirthDay.prototype = {
     },
     
     set uri(aUri) {
+        if (!aUri) {
+            MyLOG(0, "Invalid aUri set, ignoring: " + aUri);
+            return;
+        }
+
         MyLOG(3,"TBD: set uri: " + aUri.spec);
         
         this.mUri = aUri;

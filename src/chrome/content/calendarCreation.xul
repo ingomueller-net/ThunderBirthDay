@@ -46,29 +46,19 @@
 
 <overlay id="cTBD_calendarCreation" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <wizard id="calendar-wizard">
-        <script type="application/x-javascript" src="chrome://thunderbirthday/content/calendarCreation.js"/>
-        <script type="application/javascript"><![CDATA[
-          window.addEventListener("load", cTBD_loadCalendarCreation, false);
-        ]]></script>
-        
-        <wizardpage pageid="cTBD_locationPageLocal"
-                   next="customizePage"
-                   label="&wizard.label;"
-                   onpageshow="cTBD_checkRequiredLocal();"
-                   onpagerewound="cTBD_onLocalPageRewound();"
-                   onpageadvanced="return cTBD_onLocalPageAdvanced();"
-                   description="&wizard.description;">
-            <description>&cTBD_locationpage.description;</description>
-            
-            <radiogroup id="cTBD-calendar-format" onselect="cTBD_onChangeFormatSelection();" onchange="cTBD_checkRequiredLocal();">
-                <radio value="default" label="&cTBD_locationpage.format.default;" selected="true"/>
-                <radio value="thunderbirthday" label="&cTBD_locationpage.format.thunderbirthday;"/>
+
+        <wizardpage id="initialPage">
+            <radiogroup id="calendar-type">
+                <radio value="birthday" label="&cTBD_locationpage.format.thunderbirthday;" />
             </radiogroup>
-            
             <menulist id="cTBD-abook-uri" label="&cTBD_locationpage.chooseAddressbook;" hidden="true">
-                <menupopup id="cTBD-abook-uri-popup" oncommand="cTBD_checkRequiredLocal();">
+                <menupopup id="cTBD-abook-uri-popup">
                 </menupopup>
             </menulist>
-       </wizardpage>
-   </wizard>
+        </wizardpage>
+
+    </wizard>
+
+    <script type="application/javascript" src="chrome://thunderbirthday/content/calendarCreation.js"/>
+
 </overlay>
