@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "applications": {
+    "gecko": {
+      "id": "{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}",
+      "strict_min_version": "68.0"
+    }
+  },
+  "name": "ThunderBirthDay",
+  "description": "Display birthdays from the thunderbird addressbooks as events in lightning.",
+  "version": "1.0.0-beta.1",
+  "legacy": {
+    "type": "xul"
+  }
+}
