@@ -18,7 +18,7 @@ then
 fi
 
 # Find version
-VERSION=$(grep em:version "$SRCDIR/install.rdf" | sed "s/.*<em:version>//" | sed "s/<\/.*//")
+VERSION=$(grep '"version":' src/manifest.json | sed 's/.*: "\([^"]*\)".*/\1/')
 if [[ -z "$VERSION" ]]
 then
     echo "version number not found. Exiting..."
