@@ -67,8 +67,18 @@ function cTBD_loadCalendarCreation() {
     initialPage.addEventListener("pageadvanced", cTBD_updateNextPageAndSaveWizardState);
     customizePage.addEventListener("pagerewound", cTBD_restoreWizardState);
 
-    calendarType.addEventListener("select", cTBD_updateAddressBookSelectorVisibility);
-    addressBookSelector.addEventListener("command", cTBD_checkAddressBookSelected);
+    // The select event is fired before the command event, which allows
+    // us to reset the advance button state in the select event without
+    // potentially overwriting the state set by another extension in
+    // the command event. This means an extension can always update the
+    // state in the select handler, but should only update it in command,
+    // when it is currently selected as a provider.
+    calendarType.addEventListener("select", cTBD_updateAdvanceButtonState);
+    calendarType.addEventListener("command", cTBD_updateAddressBookSelectorVisibility);
+
+    // Always update the advance button state when the address book is
+    // changed, as this can only happen when we are currently selected.
+    addressBookSelector.addEventListener("command", cTBD_updateAdvanceButtonState);
 }
 
 window.addEventListener("load", cTBD_loadCalendarCreation);
@@ -185,7 +195,7 @@ function cTBD_restoreWizardState() {
  * Checks if either default format is selected or a valid address book
  * is selected and allows advancing the wizard if so.
  */
-function cTBD_checkAddressBookSelected() {
+function cTBD_updateAdvanceButtonState() {
     let calendarType = document.getElementById("calendar-type");
     let addressBookSelector = document.getElementById("cTBD-abook-uri");
 
@@ -207,10 +217,13 @@ function cTBD_updateAddressBookSelectorVisibility() {
 
     if (calendarType.selectedItem.value == "birthday") {
         addressBookSelector.setAttribute("hidden","false");
+        // Always update advance button, as we are currently selected
+        cTBD_updateAdvanceButtonState();
     } else {
         addressBookSelector.setAttribute("hidden","true");
+        // Do not update the advance button here (in the command
+        // callback), as another extensions might now be selected and
+        // may want to take control of the button. We reset our
+        // button state in the select callback, which is fired first.
     }
-
-    // Update the state of the advance button
-    cTBD_checkAddressBookSelected();
 }
