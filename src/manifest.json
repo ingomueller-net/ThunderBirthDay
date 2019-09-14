@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "applications": {
+    "gecko": {
+      "id": "{4C9FE6FE-2C83-11DC-90B4-DC8456D89593}",
+      "strict_min_version": "68.0"
+    }
+  },
+  "name": "ThunderBirthDay",
+  "description": "Display birthdays from the thunderbird address books as events in lightning.",
+  "author": "Ingo Müller",
+  "homepage_url": "https://github.com/ingomueller-net/ThunderBirthDay",
+  "version": "1.0.0",
+  "legacy": {
+    "type": "xul"
+  }
+}

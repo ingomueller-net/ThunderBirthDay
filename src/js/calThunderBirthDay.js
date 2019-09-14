@@ -57,7 +57,7 @@ function calThunderBirthDay() {
 
 calThunderBirthDay.prototype = {
     // Inherit from calProviderBase for the the nice helpers
-    __proto__: cal.ProviderBase.prototype,
+    __proto__: cal.provider.BaseClass.prototype,
     
 /*
  * Properties required for XPCOM registration
@@ -142,6 +142,11 @@ calThunderBirthDay.prototype = {
     },
     
     set uri(aUri) {
+        if (!aUri) {
+            MyLOG(0, "Invalid aUri set, ignoring: " + aUri);
+            return;
+        }
+
         MyLOG(3,"TBD: set uri: " + aUri.spec);
         
         this.mUri = aUri;
@@ -771,7 +776,7 @@ calThunderBirthDay.prototype = {
         event.startDate.isDate = true;
         
         // This is an allday event, so set its timezone to floating.
-        event.startDate.timezone = cal.floating();
+        event.startDate.timezone = cal.dtz.floating;
         event.startDate.makeImmutable();
         
         MyLOG(5,"TBD: convert: date " + abCard.getProperty("BirthYear",null) +

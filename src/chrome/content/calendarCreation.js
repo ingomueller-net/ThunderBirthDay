@@ -44,46 +44,75 @@ var cTBD_sbs = Components.classes["@mozilla.org/intl/stringbundle;1"]
 var cTBD_locale = cTBD_sbs.createBundle("chrome://thunderbirthday/locale/" + 
                                         "calendarCreation.properties");
 
-var cTBD_savedCalendarUri = "";
-var cTBD_savedCalendarFormat = "";
+var cTBD_savedCalendarUri = null;
+var cTBD_savedCalendarFormat = null;
+var cTBD_savedCalendarName = null;
 
 
 /**
- * cTBD_loadCalendarCreation
- * Modifies the calendarCreation dialog to the suits of ThunderBirthDays
+ * Add our event listners and load the list of address books.
  */
 function cTBD_loadCalendarCreation() {
-    // Show cTBD_locationPageLocal instead of skipping the location
-    // page for local calendars
     var initialPage = document.getElementsByAttribute("pageid", "initialPage")[0];
-    initialPage.setAttribute("onpageadvanced","cTBD_onInitialAdvance()");
-    
-    // Enable automatic name proposition for the new calender when
-    // choosing thunderbird format
     var customizePage = document.getElementsByAttribute("pageid", "customizePage")[0];
-    customizePage.setAttribute("onpageshow",
-                "cTBD_initName(); " + customizePage.getAttribute("onpageshow"));
-    
+
+    var calendarType = document.getElementById("calendar-type");
+    var addressBookSelector = document.getElementById("cTBD-abook-uri");
+
     // Fill Dropdownbox with adressbooks
     cTBD_fillDropDownBox();
+
+    // These page event listeners will be called *after* the ones
+    // from lightning, as they are also registered second.
+    initialPage.addEventListener("pageadvanced", cTBD_updateNextPageAndSaveWizardState);
+    customizePage.addEventListener("pagerewound", cTBD_restoreWizardState);
+
+    // The select event is fired before the command event, which allows
+    // us to reset the advance button state in the select event without
+    // potentially overwriting the state set by another extension in
+    // the command event. This means an extension can always update the
+    // state in the select handler, but should only update it in command,
+    // when it is currently selected as a provider.
+    calendarType.addEventListener("select", cTBD_updateAdvanceButtonState);
+    calendarType.addEventListener("command", cTBD_updateAddressBookSelectorVisibility);
+
+    // Always update the advance button state when the address book is
+    // changed, as this can only happen when we are currently selected.
+    addressBookSelector.addEventListener("command", cTBD_updateAdvanceButtonState);
 }
+
+window.addEventListener("load", cTBD_loadCalendarCreation);
 
 
 /**
- * cTBD_fillDropDownBox
  * Fills the dropdownbox on the cTBD_locationPageLocal page with the names
- * of the adresbooks
+ * of the address books. Those that already have an associated calendar
+ * will be disabled.
  */
 function cTBD_fillDropDownBox() {
-    var listbox = document.getElementsByAttribute("id", "cTBD-abook-uri-popup")[0];
-    
+    let cals = cal.getCalendarManager().getCalendars({});
+
+    let listbox = document.getElementById("cTBD-abook-uri-popup");
+
+    let addMenuitem = (label, value) => {
+        let menuitem = document.createElement("menuitem");
+
+        if (cals.some(calendar => calendar.uri.spec == value)) {
+            menuitem.setAttribute("disabled", "true");
+            label = cTBD_locale.formatStringFromName(
+                "calendarExisting",
+                [label], 1
+            );
+        }
+
+        menuitem.setAttribute("value", value);
+        menuitem.setAttribute("label", label);
+        listbox.appendChild(menuitem);
+    };
+
     // "All adressbooks" item
-    var menuitem = document.createElement("menuitem");
-    menuitem.setAttribute("label",cTBD_locale.GetStringFromName("menuAllAddressbooks"));
-    menuitem.setAttribute("value","moz-abdirectory://");
-    
-    listbox.appendChild(menuitem);
-    
+    addMenuitem(cTBD_locale.GetStringFromName("menuAllAddressbooks"), "moz-abdirectory://");
+
     // Get addressbook enumerator
     var abManager = Components.classes["@mozilla.org/abmanager;1"]
                               .getService(Components.interfaces.nsIAbManager);
@@ -97,140 +126,104 @@ function cTBD_fillDropDownBox() {
                           .QueryInterface(Components.interfaces
                                                     .nsIAbDirectory);
         
-        var menuitem = document.createElement("menuitem");
-        menuitem.setAttribute("label",abDir.dirName);
-        menuitem.setAttribute("value",abDir.URI);
-        
-        listbox.appendChild(menuitem);
+        addMenuitem(abDir.dirName, abDir.URI);
     }
 }
 
 
 /**
- * cTBD_onInitialAdvance
- * Replaces the onInitialAdvance() function. Therefore, it has to have (most of)
- * the functionality of the replaced function: It changes the next page after
- * the initial page according to the selected radio button. Also saves the state
- * of the wizard before leaving the initial page.
+ * Change the next page to customizePage if the birthday calendar type
+ * is selected and save the uri, format, and name, so we can restore
+ * them to their original values if we go back to the initial page.
+ *
+ * Must be run *after* the lightning onInitialAdvance function.
  */
-function cTBD_onInitialAdvance() {
-    // Save values, that are eventually to be overwritten
-    cTBD_savedCalendarUri = document.getElementById("calendar-uri").value;
-    cTBD_savedCalendarFormat = document.getElementById("calendar-format").selectedItem.value;
-    
-    // Set next page
+function cTBD_updateNextPageAndSaveWizardState(event) {
     var type = document.getElementById("calendar-type").selectedItem.value;
-    var page = document.getElementsByAttribute("pageid", "initialPage")[0];
-    if (type == "local") {
-        // Note: prepareCreateCalendar is called in cTBD_onLocalPageAdvanced
-        page.next = "cTBD_locationPageLocal";
-    } else {
-        page.next = "locationPage";
+    var initialPage = document.getElementsByAttribute("pageid", "initialPage")[0];
+
+    // Go directly to the customizePage, as we do not need the locationPage
+    if (type == "birthday") {
+        initialPage.next = "customizePage";
+
+        var calendarUri = document.getElementById("calendar-uri");
+        var calendarFormat = document.getElementById("calendar-format");
+        var calendarName = document.getElementById("calendar-name");
+
+        // Save values, that are eventually to be overwritten
+        cTBD_savedCalendarUri = calendarUri.value;
+        cTBD_savedCalendarFormat = calendarFormat.selectedItem.value;
+        cTBD_savedCalendarName = calendarName.value;
+
+        // Set values accordingly
+        calendarUri.value = document.getElementById("cTBD-abook-uri").value;
+        calendarFormat.selectedItem.value = "thunderbirthday";
+        calendarName.value = cTBD_locale.GetStringFromName("calendarNameProposition");
+
+        // As we skip the locationPage, we need to call prepareCreateCalendar
+        // ourselfs, just as it is done for local in the original onInitialAdvance.
+        // It will create the calendar provider and check for duplicate calendars etc.
+        prepareCreateCalendar(event);
     }
 }
 
 
 /**
- * cTBD_onChangeFormatSelection
- * Hides/Unhides the textbox for the abook-path according to whether the
- * thunderbird radio button is selected or not.
+ * Restores the uri, format, and name saved in
+ * cTBD_updateNextPageAndSaveWizardState.
  */
-function cTBD_onChangeFormatSelection() {
-    if (document.getElementsByAttribute("id", "cTBD-calendar-format")[0]
-                .selectedItem.value == "thunderbirthday") {
-        document.getElementsByAttribute("id", "cTBD-abook-uri")[0]
-                .setAttribute("hidden","false");
-    } else {
-        document.getElementsByAttribute("id", "cTBD-abook-uri")[0]
-                .setAttribute("hidden","true");
+function cTBD_restoreWizardState() {
+    // cTBD_savedCalendarName is only non-null, if we entered the
+    // customizePage through cTBD_updateNextPageAndSaveWizardState.
+    if (cTBD_savedCalendarName != null) {
+        var calendarUri = document.getElementById("calendar-uri");
+        var calendarFormat = document.getElementById("calendar-format");
+        var calendarName = document.getElementById("calendar-name");
+
+        calendarUri.value = cTBD_savedCalendarUri;
+        calendarFormat.selectedItem.value = cTBD_savedCalendarFormat;
+        calendarName.value = cTBD_savedCalendarName;
+
+        cTBD_savedCalendarUri = null;
+        cTBD_savedCalendarFormat = null;
+        cTBD_savedCalendarName = null;
     }
-    
-    cTBD_checkRequiredLocal();
 }
 
 
 /**
- * cTBD_checkRequiredLocal
- * Checks if either default format is selected or cTBD-abook-uri
- * is a valid uri ending with /abook.mab and enables forwarding if so.
+ * Checks if either default format is selected or a valid address book
+ * is selected and allows advancing the wizard if so.
  */
-function cTBD_checkRequiredLocal() {
-    var canAdvance = false;
-    
-    if (document.getElementsByAttribute("id", "cTBD-calendar-format")[0]
-                .selectedItem.value != "thunderbirthday" ||
-        document.getElementsByAttribute("id", "cTBD-abook-uri")[0]
-                .selectedItem != null) {
-        canAdvance = true;
-    }
-    
+function cTBD_updateAdvanceButtonState() {
+    let calendarType = document.getElementById("calendar-type");
+    let addressBookSelector = document.getElementById("cTBD-abook-uri");
+
+    let type = calendarType.selectedItem.value;
+    let selectedItem = addressBookSelector.selectedItem;
+
+    let canAdvance = type != "birthday" || selectedItem != null;
     document.getElementById("calendar-wizard").canAdvance = canAdvance;
 }
 
 
-/** cTBD_onLocalPageAdvanced
- * Modifies the form accordingly to the input of the user, i.e. sets
- * the calendar format to "thunderbirthday" and the uri to the address
- * book uri, if a TBD calendar is to be created. Also
- * prepareCreateCalendar is called.
+/**
+ * Show the address book selector only if the birthday calendar type
+ * is selected.
  */
-function cTBD_onLocalPageAdvanced() {
-    if (document.getElementById("cTBD-calendar-format")
-                .selectedItem.value == "thunderbirthday") {
-        // Set values accordingly
-        document.getElementById("calendar-uri").value = 
-                    document.getElementsByAttribute("id", "cTBD-abook-uri")[0].value;
-        document.getElementById("calendar-type").selectedItem.value = "remote";
-        document.getElementById("calendar-format").selectedItem.value = "thunderbirthday";
+function cTBD_updateAddressBookSelectorVisibility() {
+    let calendarType = document.getElementById("calendar-type");
+    let addressBookSelector = document.getElementById("cTBD-abook-uri");
+
+    if (calendarType.selectedItem.value == "birthday") {
+        addressBookSelector.setAttribute("hidden","false");
+        // Always update advance button, as we are currently selected
+        cTBD_updateAdvanceButtonState();
     } else {
-        document.getElementById("calendar-type").selectedItem.value = "local";
+        addressBookSelector.setAttribute("hidden","true");
+        // Do not update the advance button here (in the command
+        // callback), as another extensions might now be selected and
+        // may want to take control of the button. We reset our
+        // button state in the select callback, which is fired first.
     }
-    
-    return prepareCreateCalendar();
-}
-
-
-/**
- * cTBD_onLocalPageRewound
- * Restores the state previously saved when the initial page was left.
- * The state consist of the calendar format and uri eventually chosen
- * in the remote part of the wizard.
- */
-function cTBD_onLocalPageRewound() {
-    // Restore values overwritten previously
-    document.getElementById("calendar-uri").value = cTBD_savedCalendarUri;
-    document.getElementById("calendar-type").selectedItem.value = "local";
-    document.getElementById("calendar-format").selectedItem.value = cTBD_savedCalendarFormat;
-}
-
-
-/**
- * cTBD_initName
- * Fills the textbox on the customizePage with a proposition, if
- * thunderbird has been choosen as calender format
- */
-function cTBD_initName() {
-    var nameField = document.getElementById("calendar-name");
-    if (document.getElementsByAttribute("id", "cTBD-calendar-format")[0]
-                .selectedItem.value != "thunderbirthday" ||
-        nameField.value) {
-        return;
-    }
-    
-    nameField.value = cTBD_locale.GetStringFromName("calendarNameProposition");
-}
-
-
-/**
- * cTBD_makeURL
- * Takes a string and returns an nsIURI
- *
- * @param aUriString  the string of the address to for the spec of the nsIURI
- *
- * @returns  an nsIURI whose spec is aUriString
- */
-function cTBD_makeURL(aUriString) {
-    var ioSvc = Components.classes["@mozilla.org/network/io-service;1"].
-                getService(Components.interfaces.nsIIOService);
-    return ioSvc.newURI(aUriString, null, null);
 }
