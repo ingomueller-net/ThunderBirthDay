@@ -7,7 +7,9 @@
     }
   },
   "name": "ThunderBirthDay",
-  "description": "Display birthdays from the thunderbird addressbooks as events in lightning.",
+  "description": "Display birthdays from the thunderbird address books as events in lightning.",
+  "author": "Ingo Müller",
+  "homepage_url": "https://github.com/ingomueller-net/ThunderBirthDay",
   "version": "1.0.0",
   "legacy": {
     "type": "xul"

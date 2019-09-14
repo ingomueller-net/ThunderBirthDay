@@ -8,14 +8,7 @@
 #
 
 ROOTDIR="$(pushd `dirname $0` > /dev/null; pwd; popd > /dev/null)"
-
-# Find install.rdf
 SRCDIR="$ROOTDIR/src"
-if [ ! -e "$SRCDIR/install.rdf" ]
-then
-    echo "install.rdf not found. Exiting..."
-    exit
-fi
 
 # Find version
 VERSION=$(grep '"version":' src/manifest.json | sed 's/.*: "\([^"]*\)".*/\1/')

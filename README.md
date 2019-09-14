@@ -9,21 +9,6 @@ addressbooks as events in Lightning.
 Go to https://addons.mozilla.org/thunderbird/addon/thunderbirthday/ and follow
 the installation instructions there.
 
-
-# Credits
-
-A huge thanks to all contributors of this extensions!
-
-* Philipp Kewisch -- The author of the google calendar provider, which
-  served as skeleton for ThunderBirthDay
-* Michael Kurz -- For the active testing and the support in bug smashing!
-* edvoldi -- A very eager tester from www.sunbird-kalender.de/forum/
-* Babelzilla and the translators there -- See datails in install.rdf
-* www.icondrawer.com -- For making the duty free icon used for this extension
-
-And many other testers...
-
-
 # Known issues
 
 * calIItemBase.id
@@ -91,10 +76,9 @@ up-to-date version of this list.
 # Resources for developers
 
 * http://ingomueller.net/mozilla/thunderbirthday -- The projects home page
-* http://rfc.net/rfc2445.html -- RFC2445 - Internet Calendaring and
+* https://tools.ietf.org/html/rfc5545 -- RFC2445 - Internet Calendaring and
   Scheduling Core Object Specification (iCalendar)
-* http://mxr.mozilla.org/ -- Source code of Thunderbird and Lighting
-* http://mxr.mozilla.org/mozilla/source/calendar/base/public/calICalendar.idl --
+* https://dxr.mozilla.org/comm-release/source/ -- Latest source code of Thunderbird and Lighting
+* https://dxr.mozilla.org/comm-release/source/calendar/base/public/calICalendar.idl --
   Specification of the calICalendar interface - the main interface TBD is
   implementing.
-
